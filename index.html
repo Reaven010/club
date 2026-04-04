@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EUREKA | Technical Club</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --navy: #0B1118;
+            --gold: #C5A16F;
+            --blue: #A3C4D9;
+            --cream: #FDF6E3;
+        }
+
+        body {
+            background-color: var(--navy);
+            color: var(--cream);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .font-sync {
+            font-family: 'Syncopate', sans-serif;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .glass-panel {
+            background: rgba(11, 17, 24, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(197, 161, 111, 0.2);
+            transition: all 0.4s ease;
+        }
+
+        .glass-panel:hover {
+            border-color: var(--gold);
+            background: rgba(197, 161, 111, 0.05);
+        }
+
+        .gold-gradient-text {
+            background: linear-gradient(to bottom, #FDF6E3 0%, #C5A16F 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-eureka {
+            border: 1px solid var(--gold);
+            padding: 10px 30px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 0.7rem;
+            transition: 0.3s;
+        }
+
+        .btn-eureka:hover {
+            background: var(--gold);
+            color: var(--navy);
+            box-shadow: 0 0 20px rgba(197, 161, 111, 0.4);
+        }
+
+        /* Member Photo Style */
+        .member-frame {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto;
+            border: 2px solid var(--gold);
+            padding: 8px;
+            clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
+        }
+
+        .member-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(100%) contrast(1.1);
+            transition: 0.5s;
+            clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
+        }
+
+        .member-card:hover .member-img {
+            filter: grayscale(0%);
+            transform: scale(1.1);
+        }
+
+        .section-title {
+            font-size: 0.7rem;
+            letter-spacing: 0.8em;
+            text-transform: uppercase;
+            color: var(--blue);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        #hero-logo {
+            perspective: 1000px;
+            /* Enables 3D perspective */
+            margin-bottom: 2.5rem;
+        }
+
+        .club-logo {
+            width: 500px;
+            height: 500px;
+
+            border-radius: 50%;
+            object-fit: contain;
+
+            /* Refined Cinematic Glow */
+            filter: drop-shadow(0 0 25px rgba(197, 161, 111, 0.4));
+
+            /* Smooth transition for animations */
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), filter 0.3s ease;
+            cursor: pointer;
+        }
+
+        .club-logo:hover {
+            transform: scale(1.05) rotateY(10deg) rotateX(5deg);
+            filter: drop-shadow(0 0 40px rgba(197, 161, 111, 0.7));
+        }
+
+        @media (max-width: 768px) {
+            .club-logo {
+                width: 130px;
+                height: 130px;
+            }
+        }
+
+        /* for social card */
+
+        .social-card {
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(197, 161, 111, 0.1) !important;
+        }
+
+        .social-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: var(--gold) !important;
+            background: rgba(197, 161, 111, 0.05);
+        }
+
+        .social-icon-wrapper {
+            color: var(--gold);
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .social-card:hover .social-icon-wrapper {
+            opacity: 1;
+            filter: drop-shadow(0 0 10px var(--gold));
+        }
+
+        /* Add a scanner line effect for extra tech vibes */
+        .social-card::after {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, rgba(197, 161, 111, 0.1), transparent);
+            animation: scan 4s infinite linear;
+        }
+
+        @keyframes scan {
+            0% {
+                top: -100%;
+            }
+
+            100% {
+                top: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="canvas-container"></div>
+
+    <!-- Navigation -->
+    <nav class="flex justify-between items-center px-8 py-6 fixed w-full z-50 mix-blend-difference">
+        <div class="font-sync text-xl font-bold tracking-tighter gold-gradient-text">EUREKA</div>
+        <div class="hidden md:flex space-x-8 text-[10px] uppercase tracking-widest">
+            <a href="#about" class="hover:text-[#C5A16F]">Mission</a>
+            <a href="#board" class="hover:text-[#C5A16F]">The Board</a>
+            <a href="#" class="btn-eureka">Login Terminal</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="h-screen flex flex-col justify-center items-center relative z-10 px-6 text-center">
+        <!-- Logo Container -->
+        <div class="opacity-0" id="hero-logo">
+            <!-- Replace 'logo.png' with your actual logo file path -->
+            <img src="eureka-logo.png" alt="Eureka Logo" class="club-logo mx-auto">
+        </div>
+
+        <h2 id="hero-sub" class="text-xs uppercase tracking-[1em] mb-4 text-[#A3C4D9] opacity-0">Advanced Technical
+            Collective</h2>
+        <h1 id="hero-title" class="text-6xl md:text-9xl font-sync font-bold my-4 opacity-0">
+            EUR<span class="gold-gradient-text italic">E</span>KA
+        </h1>
+        <p id="hero-p" class="max-w-xl mx-auto text-gray-400 font-light tracking-wide opacity-0">
+            Never stop learning,Never stop exploring ,It's Eureka every day
+        </p>
+        <div id="hero-btns" class="mt-10 opacity-0">
+            <button class="btn-eureka">Initialize Discovery</button>
+        </div>
+    </section>
+
+    <!-- Club Info Section -->
+    <section id="about" class="py-32 px-8 relative z-10">
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+            <div class="reveal">
+                <span class="section-title">The Blueprint</span>
+                <h2 class="text-4xl font-sync mb-6">What is <span class="gold-gradient-text">Eureka?</span></h2>
+                <p class="text-gray-400 leading-relaxed mb-6">
+                    WHO ARE WE?<br>
+                    Eureka Club is the Research & Development community of curious minds dedicated to innovation and
+                    discovery. We explore ideas, conduct experiments, and develop solutions that push the boundaries of
+                    knowledge and technology.
+                </p>
+                <div class="grid grid-cols-2 gap-6 mt-10">
+                    <div class="border-l-2 border-[#C5A16F] pl-4">
+                        <h4 class="font-sync text-xs gold-gradient-text">INNOVATION</h4>
+                        <p class="text-xs text-gray-500 mt-2">Developing sustainable tech solutions.</p>
+                    </div>
+                    <div class="border-l-2 border-[#C5A16F] pl-4">
+                        <h4 class="font-sync text-xs gold-gradient-text">COLLABORATION</h4>
+                        <p class="text-xs text-gray-500 mt-2">Cross-disciplinary research nodes.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-panel p-1 border-none reveal">
+                <!-- Visual Element: Simulated Code/UI -->
+                <div class="bg-[#05080c] p-6 font-mono text-[10px] text-[#A3C4D9] opacity-60">
+                    <div>> INITIALIZING CORE_SYSTEM...</div>
+                    <div class="text-[#C5A16F] mt-2">> SECTORS: Research, Development, Fun</div>
+                    <div class="mt-2">> STATUS: ACTIVE</div>
+                    <div class="mt-4 text-white">"Discovery is seeing what everybody else has seen, and thinking what
+                        nobody else has thought."</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Board Members Section -->
+    <section id="board" class="py-32 px-8 bg-[#080d12] relative z-10">
+        <div class="max-w-7xl mx-auto text-center mb-20">
+            <span class="section-title">The Architects</span>
+            <h2 class="text-4xl font-sync">The Board <span class="gold-gradient-text">Members</span></h2>
+        </div>
+
+        <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+
+            <!-- Member 1 -->
+            <div class="member-card text-center board-reveal">
+                <div class="member-frame mb-6">
+                    <img src="./shelly.png" alt="Member" class="member-img">
+                </div>
+                <h3 class="font-sync text-sm gold-gradient-text mb-1">Shelly Sharma</h3>
+                <span class="text-[10px] uppercase tracking-widest text-[#A3C4D9]">President</span>
+            </div>
+
+            <!-- Member 2 -->
+            <div class="member-card text-center board-reveal">
+                <div class="member-frame mb-6">
+                    <img src="./njoshi.png" alt="Member" class="member-img">
+                </div>
+                <h3 class="font-sync text-sm gold-gradient-text mb-1">Naman Joshi</h3>
+                <span class="text-[10px] uppercase tracking-widest text-[#A3C4D9]">General Secretary</span>
+            </div>
+
+            <!-- Member 3 -->
+            <div class="member-card text-center board-reveal">
+                <div class="member-frame mb-6">
+                    <img src="./vaidahi.png" alt="Member" class="member-img">
+                </div>
+                <h3 class="font-sync text-sm gold-gradient-text mb-1">Vaidehi Gupta</h3>
+                <span class="text-[10px] uppercase tracking-widest text-[#A3C4D9]">Vice President</span>
+            </div>
+
+            <!-- Member 4 -->
+            <div class="member-card text-center board-reveal">
+                <div class="member-frame mb-6">
+                    <img src="./Pranjal ghosh.png" alt="Member" class="member-img">
+                </div>
+                <h3 class="font-sync text-sm gold-gradient-text mb-1">Pranjal Ghosh</h3>
+                <span class="text-[10px] uppercase tracking-widest text-[#A3C4D9]">Advisor</span>
+            </div>
+            <!-- Member 5 -->
+            <div class="member-card text-center board-reveal">
+                <div class="member-frame mb-6">
+                    <img src="./sneha singh.png" alt="Member" class="member-img">
+                </div>
+                <h3 class="font-sync text-sm gold-gradient-text mb-1">Sneha Singh</h3>
+                <span class="text-[10px] uppercase tracking-widest text-[#A3C4D9]">Joint Secretary</span>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Socials & Connectivity Section -->
+    <section id="connect" class="py-32 px-8 relative z-10 overflow-hidden">
+        <!-- Decorative background element -->
+        <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#C5A16F] opacity-[0.03] rounded-full blur-[120px] pointer-events-none">
+        </div>
+
+        <div class="max-w-6xl mx-auto text-center mb-16">
+            <span class="section-title">Join the Network</span>
+            <h2 class="text-4xl font-sync">Connect with the <span class="gold-gradient-text">Hub</span></h2>
+        </div>
+
+        <div class="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 social-container">
+
+            <!-- Instagram Card -->
+            <a href="https://www.instagram.com/eurekavitb?igsh=MWl4NHh2bTR5enBuOA=="
+                class="social-card glass-panel p-8 text-center group">
+                <div class="social-icon-wrapper mb-4">
+                    <svg class="w-10 h-10 mx-auto" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                </div>
+                <h4
+                    class="font-sync text-[10px] tracking-widest text-[#A3C4D9] group-hover:text-[#C5A16F] transition-colors">
+                    Instagram</h4>
+                <p class="text-[9px] text-gray-500 mt-2 uppercase">Visual Log</p>
+            </a>
+
+            <!-- LinkedIn Card -->
+            <a href="https://www.linkedin.com/company/theeurekaclub/"
+                class="social-card glass-panel p-8 text-center group">
+                <div class="social-icon-wrapper mb-4">
+                    <svg class="w-10 h-10 mx-auto" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                    </svg>
+                </div>
+                <h4
+                    class="font-sync text-[10px] tracking-widest text-[#A3C4D9] group-hover:text-[#C5A16F] transition-colors">
+                    LinkedIn</h4>
+                <p class="text-[9px] text-gray-500 mt-2 uppercase">Professional Node</p>
+            </a>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-gray-900 text-center text-[10px] uppercase tracking-[0.5em] text-gray-600">
+        &copy; 2024 Eureka Technical Club // Beyond Boundaries
+    </footer>
+
+    <script>
+        // --- 1. 3D Background (Three.js) ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsCount = 1500;
+        const posArray = new Float32Array(starsCount * 3);
+        for (let i = 0; i < starsCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 10;
+        }
+        starsGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const starsMaterial = new THREE.PointsMaterial({ size: 0.005, color: 0xC5A16F });
+        const starsMesh = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(starsMesh);
+        camera.position.z = 3;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            starsMesh.rotation.y += 0.0005;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- 2. GSAP Animations ---
+        gsap.registerPlugin(ScrollTrigger);
+        const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
+
+        // Hero Sequence
+        tl.to("#hero-logo", { opacity: 1, scale: 1, duration: 1.5, delay: 0.5 })
+            .to("#hero-sub", { opacity: 1, y: 0, duration: 1 }, "-=1")
+            .to("#hero-title", { opacity: 1, y: 0, duration: 1.5 }, "-=0.8")
+            .to("#hero-p", { opacity: 1, y: 0, duration: 1 }, "-=1")
+            .to("#hero-btns", { opacity: 1, y: 0, duration: 1 }, "-=0.5");
+
+        // About Reveal
+        gsap.utils.toArray(".reveal").forEach(elem => {
+            gsap.from(elem, {
+                scrollTrigger: { trigger: elem, start: "top 85%" },
+                y: 50, opacity: 0, duration: 1.5
+            });
+        });
+
+        // Board Member Stagger Reveal
+        gsap.from(".board-reveal", {
+            scrollTrigger: {
+                trigger: "#board",
+                start: "top 70%"
+            },
+            y: 100,
+            opacity: 0,
+            duration: 1.2,
+            stagger: 0.2, // This makes them pop up one by one
+            ease: "back.out(1.7)"
+        });
+
+        // Mouse Parallax for Background
+        window.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) - 0.5;
+            const y = (e.clientY / window.innerHeight) - 0.5;
+            gsap.to(starsMesh.rotation, { y: x * 0.3, x: y * 0.3, duration: 2 });
+        });
+
+        // social card
+
+        // Social Cards Stagger Animation
+        gsap.from(".social-card", {
+            scrollTrigger: {
+                trigger: ".social-container",
+                start: "top 80%"
+            },
+            y: 40,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.15,
+            ease: "power2.out"
+        });
+
+    </script>
+</body>
+
+</html>
