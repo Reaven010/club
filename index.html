@@ -9,10 +9,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="script.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600&display=swap"
         rel="stylesheet">
-
     <style>
         :root {
             --navy: #0B1118;
@@ -54,6 +54,8 @@
         }
 
         .gold-gradient-text {
+            opacity: 1 !important;
+            -webkit-text-fill-color: initial;
             background: linear-gradient(to bottom, #FDF6E3 0%, #C5A16F 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -188,6 +190,114 @@
                 top: 100%;
             }
         }
+
+        /* aboutt members */
+
+/* 1. The Container: Create a stable 3D environment for all 9 cards */
+.division-grid {
+    perspective: 2000px; /* High perspective for all children */
+    display: grid;
+    gap: 2rem; /* Ensure there is enough breathing room between rows */
+}
+
+/* 2. The Card: Reset and Stabilize */
+.division-card {
+    position: relative;
+    cursor: pointer;
+    background: rgba(11, 17, 24, 0.7);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(197, 161, 111, 0.2);
+    
+    /* Performance optimization for animations */
+    will-change: transform, box-shadow; 
+    
+    /* Smooth but specific transitions (Avoid 'all' to prevent flickering) */
+    transition: 
+        transform 0.5s cubic-bezier(0.23, 1, 0.32, 1),
+        border-color 0.4s ease,
+        box-shadow 0.4s ease,
+        background 0.4s ease;
+        
+    /* Ensure the card is the "root" of its own 3D space */
+    transform-origin: center center;
+    z-index: 1;
+}
+        /* Ensure text inside cards is consistently bright */
+        .division-card h3,
+        .division-card p,
+        .division-card span {
+            opacity: 1 !important;
+            color: rgba(253, 246, 227, 0.9);
+            /* Subtle off-white for a cinematic look */
+        }
+
+        /* 3D Tilt Effect on Hover */
+/* 3. The Hover: Solve the Flickering */
+.division-card:hover {
+    /* Lift the card higher in Z-space so it's physically on top of neighbors */
+    z-index: 50; 
+    
+    /* Use translateZ for a true 3D lift instead of just Y */
+    transform: translateY(-10px) translateZ(20px) rotateX(2deg);
+    
+    border-color: rgba(197, 161, 111, 0.8) !important;
+    background: rgba(197, 161, 111, 0.08);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 20px rgba(197, 161, 111, 0.1);
+}
+
+.hud-corner-tl, .hud-corner-br {
+    pointer-events: none; /* Prevents brackets from stealing the hover event */
+}
+
+        /* HUD Brackets */
+        .hud-corner-tl,
+        .hud-corner-br {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--gold);
+            transition: 0.3s;
+            opacity: 0.3;
+        }
+
+        .hud-corner-tl {
+            top: -2px;
+            left: -2px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .hud-corner-br {
+            bottom: -2px;
+            right: -2px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .division-card:hover .hud-corner-tl,
+        .division-card:hover .hud-corner-br {
+            width: 40px;
+            height: 40px;
+            opacity: 1;
+            filter: drop-shadow(0 0 5px var(--gold));
+        }
+
+        /* Division scanning animation overlay */
+        .division-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(transparent, rgba(197, 161, 111, 0.05), transparent);
+            transform: translateY(-100%);
+            transition: transform 0.8s ease;
+        }
+
+        .division-card:hover::before {
+            transform: translateY(100%);
+        }
     </style>
 </head>
 
@@ -310,6 +420,248 @@
         </div>
     </section>
 
+    <!-- Operational Divisions Section -->
+    <section id="divisions" class="py-32 px-8 relative z-10">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-20 reveal">
+                <span class="section-title">Functional Nodes</span>
+                <h2 class="text-4xl font-sync">Technical <span class="gold-gradient-text">Divisions</span></h2>
+                <p class="text-[10px] text-gray-500 mt-4 tracking-[0.3em]">SELECT A DIVISION TO ACCESS CORE DATA</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 division-grid">
+
+                <!-- Division 1: content team -->
+                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('content')">
+                    <div class="hud-corner-tl"></div>
+                    <div class="hud-corner-br"></div>
+
+                    <h3
+                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
+                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_01</span>
+                        Content Department
+                    </h3>
+
+                    <div class="space-y-4 border-l border-gray-800 pl-6">
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
+                            <p class="font-sync text-sm gold-gradient-text">Anushka Upadhyay</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
+                            <p class="font-sync text-sm text-[#A3C4D9]">Medha Kaushik</p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
+                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
+                    </div>
+                </div>
+
+                <!-- Division 2: design team -->
+                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('design')">
+                    <div class="hud-corner-tl"></div>
+                    <div class="hud-corner-br"></div>
+
+                    <h3
+                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
+                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_02</span>
+                        Design Department
+                    </h3>
+
+                    <div class="space-y-4 border-l border-gray-800 pl-6">
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
+                            <p class="font-sync text-sm gold-gradient-text">Sophia Verghese</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
+                            <p class="font-sync text-sm text-[#A3C4D9]">info filling later</p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
+                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
+                    </div>
+                </div>
+
+                <!-- Division 3: Tech team -->
+                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('tech')">
+                    <div class="hud-corner-tl"></div>
+                    <div class="hud-corner-br"></div>
+
+                    <h3
+                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
+                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_03</span>
+                        Technical Department
+                    </h3>
+
+                    <div class="space-y-4 border-l border-gray-800 pl-6">
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
+                            <p class="font-sync text-sm gold-gradient-text">Swastik Srivastava</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
+                            <p class="font-sync text-sm text-[#A3C4D9]">Poorvansh jain</p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
+                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
+                    </div>
+                </div>
+                <!-- Division 4: research  and development -->
+                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('randd')">
+                    <div class="hud-corner-tl"></div>
+                    <div class="hud-corner-br"></div>
+
+                    <h3
+                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
+                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_04</span>
+                        Research Department
+                    </h3>
+
+                    <div class="space-y-4 border-l border-gray-800 pl-6">
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
+                            <p class="font-sync text-sm gold-gradient-text">Divyansh Agrawwal</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
+                            <p class="font-sync text-sm text-[#A3C4D9]">Aditya Jhawar</p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
+                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
+                    </div>
+                </div>
+                <!-- Division 5: corporate -->
+                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('corporate')">
+                    <div class="hud-corner-tl"></div>
+                    <div class="hud-corner-br"></div>
+
+                    <h3
+                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
+                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_05</span>
+                        Corporate Department
+                    </h3>
+
+                    <div class="space-y-4 border-l border-gray-800 pl-6">
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
+                            <p class="font-sync text-sm gold-gradient-text">Parth Gaur</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
+                            <p class="font-sync text-sm text-[#A3C4D9]">Akhillesh Raja</p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
+                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
+                    </div>
+                </div>
+                <!-- Division 6: stage team -->
+                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('stage')">
+                    <div class="hud-corner-tl"></div>
+                    <div class="hud-corner-br"></div>
+
+                    <h3
+                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
+                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_06</span>
+                        Stage Department
+                    </h3>
+
+                    <div class="space-y-4 border-l border-gray-800 pl-6">
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
+                            <p class="font-sync text-sm gold-gradient-text">Vrinda Jain</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
+                            <p class="font-sync text-sm text-[#A3C4D9]">Purva Kataria</p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
+                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
+                    </div>
+                </div>
+                <!-- Division 7: media team -->
+                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('media')">
+                    <div class="hud-corner-tl"></div>
+                    <div class="hud-corner-br"></div>
+
+                    <h3
+                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
+                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_07</span>
+                        Media Department
+                    </h3>
+
+                    <div class="space-y-4 border-l border-gray-800 pl-6">
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
+                            <p class="font-sync text-sm gold-gradient-text">Shivam Ghalme</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
+                            <p class="font-sync text-sm text-[#A3C4D9]">fill soon</p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
+                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
+                    </div>
+                </div>
+                <!-- Division 8: event team -->
+                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('event')">
+                    <div class="hud-corner-tl"></div>
+                    <div class="hud-corner-br"></div>
+
+                    <h3
+                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
+                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_07</span>
+                        event Department
+                    </h3>
+
+                    <div class="space-y-4 border-l border-gray-800 pl-6">
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
+                            <p class="font-sync text-sm gold-gradient-text">Rudraksh Mishra</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
+                            <p class="font-sync text-sm text-[#A3C4D9]">Aryan Mishra</p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
+                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
     <!-- Socials & Connectivity Section -->
     <section id="connect" class="py-32 px-8 relative z-10 overflow-hidden">
         <!-- Decorative background element -->
@@ -363,89 +715,114 @@
     <footer class="py-12 border-t border-gray-900 text-center text-[10px] uppercase tracking-[0.5em] text-gray-600">
         &copy; 2024 Eureka Technical Club // Beyond Boundaries
     </footer>
-
-    <script>
-        // --- 1. 3D Background (Three.js) ---
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-        const starsGeometry = new THREE.BufferGeometry();
-        const starsCount = 1500;
-        const posArray = new Float32Array(starsCount * 3);
-        for (let i = 0; i < starsCount * 3; i++) {
-            posArray[i] = (Math.random() - 0.5) * 10;
-        }
-        starsGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-        const starsMaterial = new THREE.PointsMaterial({ size: 0.005, color: 0xC5A16F });
-        const starsMesh = new THREE.Points(starsGeometry, starsMaterial);
-        scene.add(starsMesh);
-        camera.position.z = 3;
-
-        function animate() {
-            requestAnimationFrame(animate);
-            starsMesh.rotation.y += 0.0005;
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        // --- 2. GSAP Animations ---
-        gsap.registerPlugin(ScrollTrigger);
-        const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-
-        // Hero Sequence
-        tl.to("#hero-logo", { opacity: 1, scale: 1, duration: 1.5, delay: 0.5 })
-            .to("#hero-sub", { opacity: 1, y: 0, duration: 1 }, "-=1")
-            .to("#hero-title", { opacity: 1, y: 0, duration: 1.5 }, "-=0.8")
-            .to("#hero-p", { opacity: 1, y: 0, duration: 1 }, "-=1")
-            .to("#hero-btns", { opacity: 1, y: 0, duration: 1 }, "-=0.5");
-
-        // About Reveal
-        gsap.utils.toArray(".reveal").forEach(elem => {
-            gsap.from(elem, {
-                scrollTrigger: { trigger: elem, start: "top 85%" },
-                y: 50, opacity: 0, duration: 1.5
-            });
-        });
-
-        // Board Member Stagger Reveal
-        gsap.from(".board-reveal", {
-            scrollTrigger: {
-                trigger: "#board",
-                start: "top 70%"
-            },
-            y: 100,
-            opacity: 0,
-            duration: 1.2,
-            stagger: 0.2, // This makes them pop up one by one
-            ease: "back.out(1.7)"
-        });
-
-        // Mouse Parallax for Background
-        window.addEventListener('mousemove', (e) => {
-            const x = (e.clientX / window.innerWidth) - 0.5;
-            const y = (e.clientY / window.innerHeight) - 0.5;
-            gsap.to(starsMesh.rotation, { y: x * 0.3, x: y * 0.3, duration: 2 });
-        });
-
-        // social card
-
-        // Social Cards Stagger Animation
-        gsap.from(".social-card", {
-            scrollTrigger: {
-                trigger: ".social-container",
-                start: "top 80%"
-            },
-            y: 40,
-            opacity: 0,
-            duration: 1,
-            stagger: 0.15,
-            ease: "power2.out"
-        });
-
-    </script>
 </body>
+<script>
+    // --- 1. 3D Background (Three.js) ---
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    const starsGeometry = new THREE.BufferGeometry();
+    const starsCount = 1500;
+    const posArray = new Float32Array(starsCount * 3);
+    for (let i = 0; i < starsCount * 3; i++) {
+        posArray[i] = (Math.random() - 0.5) * 10;
+    }
+    starsGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    const starsMaterial = new THREE.PointsMaterial({ size: 0.005, color: 0xC5A16F });
+    const starsMesh = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(starsMesh);
+    camera.position.z = 3;
+
+    function animate() {
+        requestAnimationFrame(animate);
+        starsMesh.rotation.y += 0.0005;
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // --- 2. GSAP Animations ---
+    gsap.registerPlugin(ScrollTrigger);
+    const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
+
+    // Hero Sequence
+    tl.to("#hero-logo", { opacity: 1, scale: 1, duration: 1.5, delay: 0.5 })
+        .to("#hero-sub", { opacity: 1, y: 0, duration: 1 }, "-=1")
+        .to("#hero-title", { opacity: 1, y: 0, duration: 1.5 }, "-=0.8")
+        .to("#hero-p", { opacity: 1, y: 0, duration: 1 }, "-=1")
+        .to("#hero-btns", { opacity: 1, y: 0, duration: 1 }, "-=0.5");
+
+    // About Reveal
+    gsap.utils.toArray(".reveal").forEach(elem => {
+        gsap.from(elem, {
+            scrollTrigger: { trigger: elem, start: "top 85%" },
+            y: 50, opacity: 0, duration: 1.5
+        });
+    });
+
+    // Board Member Stagger Reveal
+    gsap.from(".board-reveal", {
+        scrollTrigger: {
+            trigger: "#board",
+            start: "top 70%"
+        },
+        y: 100,
+        opacity: 0,
+        duration: 1.2,
+        stagger: 0.2, // This makes them pop up one by one
+        ease: "back.out(1.7)"
+    });
+
+    // Mouse Parallax for Background
+    window.addEventListener('mousemove', (e) => {
+        const x = (e.clientX / window.innerWidth) - 0.5;
+        const y = (e.clientY / window.innerHeight) - 0.5;
+        gsap.to(starsMesh.rotation, { y: x * 0.3, x: y * 0.3, duration: 2 });
+    });
+
+    // social card
+
+    // Social Cards Stagger Animation
+    gsap.from(".social-card", {
+        scrollTrigger: {
+            trigger: ".social-container",
+            start: "top 80%"
+        },
+        y: 40,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.15,
+        ease: "power2.out"
+    });
+
+    // Staggered entry for divisions
+    gsap.from(".division-card", {
+        scrollTrigger: {
+            trigger: ".division-grid",
+            start: "top 95%",
+            toggleActions: "play none none none"
+        },
+        y: 60,
+        duration: 1.2,
+        stagger: 0.15,
+        ease: "expo.out",
+        clearProps: "all"
+    });
+
+    // Function to handle clicking a division
+    function navigateToTeam(teamId) {
+        // Add a cinematic exit animation before "navigating"
+        gsap.to("body", {
+            opacity: 0,
+            duration: 0.6,
+            onComplete: () => {
+                window.location.href = `team-details.html?team=${teamId}`;
+            }
+        });
+    }
+
+</script>
 
 </html>
