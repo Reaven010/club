@@ -7,7 +7,7 @@ This `README.md` is designed to match the high-end, technical aesthetic of your 
 
 A cinematic, high-performance web experience for the **Eureka Technical Club**. This project blends cutting-edge web technologies to create a "Technical Operating System" feel, inspired by sci-fi interfaces and modern engineering aesthetics.
 
-![Eureka Logo](https://i.ibb.co/3ykG83K/eureka-logo.png)
+![Eureka Logo](./eureka-logo.png)
 
 ## 🌌 Core Features
 
@@ -85,4 +85,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 **System Status: [ STABLE ]**  
 **Eureka Technical Club // Beyond Boundaries**
 ## Creater
-**Name :**Sayujya Tiwari
+**Name :Sayujya Tiwari** 
