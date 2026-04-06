@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,13 +8,31 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Space+Grotesk:wght@300;500&family=JetBrains+Mono&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Space+Grotesk:wght@300;500&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+
     <style>
-        :root { --navy: #0B1118; --gold: #C5A16F; --blue: #A3C4D9; }
-        body { background: var(--navy); color: #FDF6E3; font-family: 'Space Grotesk', sans-serif; overflow-x: hidden; }
-        .font-sync { font-family: 'Syncopate', sans-serif; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        :root {
+            --navy: #0B1118;
+            --gold: #C5A16F;
+            --blue: #A3C4D9;
+        }
+
+        body {
+            background: var(--navy);
+            color: #FDF6E3;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .font-sync {
+            font-family: 'Syncopate', sans-serif;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
 
         /* Cinematic Profile Card */
         .profile-card {
@@ -22,37 +41,83 @@
             transition: all 0.5s ease;
             position: relative;
         }
-        .profile-card:hover { border-color: var(--gold); background: rgba(197, 161, 111, 0.05); transform: translateY(-5px); }
-        
+
+        .profile-card:hover {
+            border-color: var(--gold);
+            background: rgba(197, 161, 111, 0.05);
+            transform: translateY(-5px);
+        }
+
         .img-frame {
             aspect-ratio: 1/1;
             overflow: hidden;
             clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
             border: 1px solid rgba(197, 161, 111, 0.2);
         }
-        .profile-img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%); transition: 0.5s; }
-        .profile-card:hover .profile-img { filter: grayscale(0%); transform: scale(1.05); }
+
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(100%);
+            transition: 0.5s;
+        }
+
+        .profile-card:hover .profile-img {
+            filter: grayscale(0%);
+            transform: scale(1.05);
+        }
 
         /* Loader */
-        #loader { position: fixed; inset: 0; background: var(--navy); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: var(--navy);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* cursor */
+
+#fluid-canvas {
+    width: 100vw;
+    height: 100vh;
+    opacity: 0.6; /* Keeps it cinematic and not distracting */
+    filter: saturate(1.2) brightness(1.1);
+}
+
+/* Ensure the background stays dark so the gold fluid pops */
+body {
+    background-color: #0B1118 !important;
+}
     </style>
 </head>
+
 <body>
 
     <div id="loader">
         <div class="font-mono text-[10px] text-[#A3C4D9] mb-4 tracking-[0.5em]">DECRYPTING_TEAM_FILES...</div>
-        <div class="w-48 h-[1px] bg-gray-800"><div id="load-bar" class="h-full bg-[#C5A16F] w-0"></div></div>
+        <div class="w-48 h-[1px] bg-gray-800">
+            <div id="load-bar" class="h-full bg-[#C5A16F] w-0"></div>
+        </div>
     </div>
 
     <header class="p-8 flex justify-between items-center relative z-20">
-        <a href="index.html" class="font-sync text-[10px] tracking-widest text-gray-500 hover:text-[#C5A16F]">← SYSTEM_BACK</a>
+        <a href="index.html" class="font-sync text-[10px] tracking-widest text-gray-500 hover:text-[#C5A16F]">←
+            SYSTEM_BACK</a>
         <div id="team-id-tag" class="font-mono text-[10px] text-[#C5A16F] tracking-[0.4em]">UNIT // NULL</div>
     </header>
 
     <section class="py-20 px-8">
         <div class="max-w-7xl mx-auto text-center mb-24">
-            <h1 id="team-title" class="text-5xl md:text-7xl font-sync font-bold uppercase tracking-tighter mb-4 opacity-0">Loading...</h1>
-            <p id="team-subtitle" class="text-[#A3C4D9] font-mono text-xs tracking-widest opacity-0 uppercase">Accessing secure database</p>
+            <h1 id="team-title"
+                class="text-5xl md:text-7xl font-sync font-bold uppercase tracking-tighter mb-4 opacity-0">Loading...
+            </h1>
+            <p id="team-subtitle" class="text-[#A3C4D9] font-mono text-xs tracking-widest opacity-0 uppercase">Accessing
+                secure database</p>
         </div>
 
         <div id="member-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
@@ -69,11 +134,10 @@
                 subtitle: "Where words turn into influence",
                 tag: "UNIT // CO-01",
                 members: [
-                    { name: "ANUSHKA UPADHYAY", role: "Team Lead", spec: "idk", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d" },
-                    { name: "Medha kaushik", role: "Co-Lead", spec: "idk", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330" },
-                    { name: "Animesh Arjariya", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e" },
-                    { name: "Pratibha Jha", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e" },
-                    { name: "ANSHIK PANDA  ", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e" }
+                    { name: "ANUSHKA UPADHYAY", role: "Team Lead", spec: "idk", img: "content-team/anushka-upadhyay.png" },
+                    { name: "Medha Kaushik", role: "Co-Lead", spec: "idk", img: "content-team/medha-kaushik.png" },
+                    { name: "ANSHIK PANDA", role: "Member", spec: "idk", img: "content-team/anshik-panda.png" },
+                    { name: "Samriddhi Gupta", role: "Member", spec: "idk", img: "content-team/samriddhi-gupta.png" }
                 ]
             },
             "design": {
@@ -81,10 +145,10 @@
                 subtitle: "Designing visuals that define identity",
                 tag: "UNIT // DE-02",
                 members: [
-                    { name: "SOPHIA VERGHESE", role: "Team Lead", spec: "idk", img: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6" },
-                    { name: "ASHESH NATH YADAV", role: "Co-Lead", spec: "idk", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb" },
-                    { name: "HARSH CHOUDHARY", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" },
-                    { name: "GAURAV JAIN", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" }
+                    { name: "SOPHIA VERGHESE", role: "Team Lead", spec: "idk", img: "design-team/sophia-verghese.png" },
+                    { name: "ASHESH NATH YADAV", role: "Co-Lead", spec: "idk", img: "design-team/ashesh-nath-yadav.png" },
+                    { name: "Shresth Shukla", role: "Member", spec: "idk", img: "design-team/shreshth-shukla.png" },
+                    { name: "GAURAV JAIN", role: "Member", spec: "idk", img: "design-team/gaurav-jain.png" }
                 ]
             },
             "tech": {
@@ -93,11 +157,10 @@
                 tag: "UNIT // TE-03",
                 members: [
                     { name: "SWANIK SRIVASTAVA", role: "Team Lead", spec: "idk", img: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6" },
-                    { name: "poorvansh jain", role: "Co-Lead", spec: "idk", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb" },
-                    { name: "UNNATI LOHANA", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" },
-                    { name: "Daksh Jain", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" },
-                    { name: "Sayujya tiwari", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" },
-                    { name: "SHILPI KUMARI", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" }
+                    { name: "poorvansh jain", role: "Co-Lead", spec: "idk", img: "tech-team/Poorvansh-jain.png" },
+                    { name: "UNNATI LOHANA", role: "Member", spec: "idk", img: "tech-team/unnati-lohana.png" },
+                    { name: "Daksh Jain", role: "Member", spec: "idk", img: "tech-team/daksh-jain.png" },
+                    { name: "Sayujya tiwari", role: "Member", spec: "idk", img: "tech-team/sayujya-tiwari.png" }
                 ]
             },
             "randd": {
@@ -105,9 +168,10 @@
                 subtitle: "Innovate. Experiment. Evolve.",
                 tag: "UNIT // RD-04",
                 members: [
-                    { name: "DIVYANSH AGARWAL", role: "Team Lead", spec: "idk", img: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6" },
-                    { name: "ADITYA JHAWAR", role: "Co-Lead", spec: "idk", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb" },
-                    { name: "AKSHAT KHEDEKAR", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" }
+                    { name: "DIVYANSH AGARWAL", role: "Team Lead", spec: "idk", img: "r&d-team/divyansh-agrawal.png" },
+                    { name: "ADITYA JHAWAR", role: "Co-Lead", spec: "idk", img: "r&d-team/additya-jhawar.png" },
+                    { name: "Animesh arjariya", role: "Member", spec: "idk", img: "r&d-team/animesh-arjariya.png" },
+                    { name: "Harsh Singh", role: "Member", spec: "idk", img: "r&d-team/harsh-singh.png" }
                 ]
             },
             "corporate": {
@@ -115,10 +179,10 @@
                 subtitle: "Connecting strategy with opportunity",
                 tag: "UNIT // CO-05",
                 members: [
-                    { name: "Parth gaur", role: "Team Lead", spec: "idk", img: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6" },
-                    { name: "Akhillesh Raj A", role: "Co-Lead", spec: "idk", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb" },
-                    { name: "Amogha Rathore", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" },
-                    { name: "YASH YADAV", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" }
+                    { name: "Parth gaur", role: "Team Lead", spec: "idk", img: "corporate-team/parth-gaur.png" },
+                    { name: "Akhillesh Raj A", role: "Co-Lead", spec: "idk", img: "corporate-team/akhillesh-raj-a.png" },
+                    { name: "Amogha Rathore", role: "Member", spec: "idk", img: "corporate-team/amogha-rathore.png" },
+                    { name: "YASH YADAV", role: "Member", spec: "idk", img: "corporate-team/yash-yadav.png" }
                 ]
             },
             "stage": {
@@ -126,7 +190,7 @@
                 subtitle: "Bringing events to life on stage",
                 tag: "UNIT // ST-06",
                 members: [
-                    { name: "VRINDA JAIN", role: "Team Lead", spec: "idk", img: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6" },
+                    { name: "VRINDA JAIN", role: "Team Lead", spec: "idk", img: "stage-team/vrinda-jain.png" },
                     { name: "Purva Kataria", role: "Co-Lead", spec: "idk", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb" },
                     { name: "idk", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" }
                 ]
@@ -136,9 +200,9 @@
                 subtitle: "Frames. Stories. Impact.",
                 tag: "UNIT // ME-07",
                 members: [
-                    { name: "Shivam Ghalme", role: "Team Lead", spec: "idk", img: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6" },
+                    { name: "Shivam Ghalme", role: "Team Lead", spec: "idk", img: "media-team/shivam-ghalme.png" },
                     { name: "idk", role: "Co-Lead", spec: "idk", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb" },
-                    { name: "Sahil wadhai", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" }
+                    { name: "Sahil Kiran Wadhai", role: "Member", spec: "idk", img: "media-team/sahil-kiran-wadhai.png" }
                 ]
             },
             "event": {
@@ -146,14 +210,11 @@
                 subtitle: "Where ideas turn into events",
                 tag: "UNIT // EA-08",
                 members: [
-                    { name: "Rudraksh Mishra", role: "Team Lead", spec: "idk", img: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6" },
-                    { name: "Aryan Mishra", role: "Co-Lead", spec: "idk", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb" },
-                    { name: "Avnish Gawande", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" },
-                    { name: "Aditya prakash", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" },
-                    { name: "Rakhi Tyagi", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" },
-                    { name: "Prathamesh kumar", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" },
-                    { name: "Sanjana Krishnan", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" },
-                    { name: " Saanya Mittal", role: "Member", spec: "idk", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" }
+                    { name: "Rudraksh Mishra", role: "Team Lead", spec: "idk", img: "event-team/rudraksh-mishra.png" },
+                    { name: "Aryan Mishra", role: "Co-Lead", spec: "idk", img: "event-team/aryan-mishra.png" },
+                    { name: "Avnish Gawande", role: "Member", spec: "idk", img: "event-team/avnish-gawande.png" },
+                    { name: "Rakhi Tyagi", role: "Member", spec: "idk", img: "event-team/rakhi-tyagi.png" },
+                    { name: "Sanjana Mittal", role: "Member", spec: "idk", img: "event-team/saanya-mittal.png" }
                 ]
             }
             // Add more teams like "space", "web", etc.
@@ -205,12 +266,13 @@
         function startAnimations() {
             const tl = gsap.timeline();
             tl.to("#load-bar", { width: "100%", duration: 1.2 })
-              .to("#loader", { yPercent: -100, duration: 0.8, ease: "expo.inOut" })
-              .to("#team-title, #team-subtitle", { opacity: 1, y: 0, duration: 1, stagger: 0.2 }, "-=0.3")
-              .to(".member-item", { opacity: 1, y: 0, duration: 1, stagger: 0.1 }, "-=0.5");
+                .to("#loader", { yPercent: -100, duration: 0.8, ease: "expo.inOut" })
+                .to("#team-title, #team-subtitle", { opacity: 1, y: 0, duration: 1, stagger: 0.2 }, "-=0.3")
+                .to(".member-item", { opacity: 1, y: 0, duration: 1, stagger: 0.1 }, "-=0.5");
         }
 
         window.onload = init;
     </script>
 </body>
+
 </html>
