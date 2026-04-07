@@ -352,8 +352,87 @@
         .event-reveal h5 {
             opacity: 1 !important;
         }
+
+        /* Add pointer cursor to logo to signal interactivity */
+        .club-logo,
+        #hero-logo {
+            cursor: pointer !important;
+        }
+
+        .terminal-box {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        /* Add a scanline effect to the login window */
+        .terminal-box::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            opacity: 0.3;
+        }
     </style>
 </head>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    if (!window.supabaseClient) {
+        window.supabaseClient = window.supabase.createClient(
+            "https://eegcyreyyeuihnspasbh.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlZ2N5cmV5eWV1aWhuc3Bhc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0ODU3MTMsImV4cCI6MjA5MTA2MTcxM30.QwndBP4Hj3k3q-jcjGN1sXzZt45_p0or_4JnRyB5E-w"
+        );
+    }
+    var supabase = window.supabaseClient;
+    console.log("supabase connected :", supabase);
+    function displayEvents(events) {
+        const container = document.getElementById("events-container");
+        container.innerHTML = "";
+
+        events.forEach(event => {
+            const card = `
+<div class="event-card glass-panel group event-reveal">
+    <div class="relative overflow-hidden aspect-video">
+        <img 
+  src="${event.image ? event.image : './past-Events/default.jpg'}"
+  class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
+>
+            class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all">
+    </div>
+    <div class="p-6">
+        <span class="font-mono text-[9px] text-[#A3C4D9]">
+            COMPLETED // ${event.date}
+        </span>
+        <h5 class="font-sync text-sm mt-2 group-hover:text-[#C5A16F] transition">
+            ${event.title}
+        </h5>
+    </div>
+</div>
+`;
+            container.innerHTML += card;
+        });
+    }
+    async function loadEvents() {
+        const { data, error } = await supabase
+            .from("events")
+            .select("*")
+            .order("date", { ascending: false });
+
+        if (!error) {
+            displayEvents(data);
+        }
+        else {
+            console.erroe(error);
+        }
+
+        console.log(data); // check data
+    }
+
+    loadEvents();
+</script>
 
 <body>
 
@@ -454,8 +533,7 @@
                         <div class="lg:w-1/2 overflow-hidden aspect-video lg:aspect-square relative">
                             <div class="absolute inset-0 bg-gradient-to-t from-navy to-transparent z-10 opacity-60">
                             </div>
-                            <img src="./past-Events/greatness.jpeg"
-                                alt="Upcoming Event"
+                            <img src="./greatness.jpeg" alt="Upcoming Event"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000">
                             <div
                                 class="absolute top-6 left-6 z-20 bg-[#C5A16F] text-navy px-4 py-1 font-sync text-[10px] animate-pulse">
@@ -481,73 +559,7 @@
 
             <!-- Previous Events: Horizontal Scroll/Grid -->
             <h3 class="font-sync text-xs text-gray-500 mb-8 tracking-[0.4em]">// MISSION_ARCHIVE</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-                <!-- Past Event 1 -->
-                <div class="event-card glass-panel group event-reveal">
-                    <div class="relative overflow-hidden aspect-video">
-                        <img src="./past-Events/the-upside-down.png"
-                            class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all">
-                    </div>
-                    <div class="p-6">
-                        <span class="font-mono text-[9px] text-[#A3C4D9]">COMPLETED // FEB 2026</span>
-                        <h5 class="font-sync text-sm mt-2 group-hover:text-[#C5A16F] transition">The Upside Down
-                        </h5>
-                    </div>
-                </div>
-                <!-- Past Event 2 -->
-                <div class="event-card glass-panel group event-reveal">
-                    <div class="relative overflow-hidden aspect-video">
-                        <img src="./past-Events/bring-to-stratosphere.png"
-                            class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all">
-                    </div>
-                    <div class="p-6">
-                        <span class="font-mono text-[9px] text-[#A3C4D9]">COMPLETED // DEC 2025</span>
-                        <h5 class="font-sync text-sm mt-2 group-hover:text-[#C5A16F] transition">Bring To Stratosphere
-                        </h5>
-                    </div>
-                </div>
-                
-                <!-- Past Event 3 -->
-                <div class="event-card glass-panel group event-reveal">
-                    <div class="relative overflow-hidden aspect-video">
-                        <img src="./past-Events/infinity-quest.png"
-                            class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all">
-                    </div>
-                    <div class="p-6">
-                        <span class="font-mono text-[9px] text-[#A3C4D9]">COMPLETED // FEB 2025</span>
-                        <h5 class="font-sync text-sm mt-2 group-hover:text-[#C5A16F] transition">Infinity Quest
-                        </h5>
-                    </div>
-                </div>
-                <!-- Past Event 4 -->
-                <div class="event-card glass-panel group event-reveal">
-                    <div class="relative overflow-hidden aspect-video">
-                        <img src="./past-Events/escape-404.png"
-                            class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all">
-                    </div>
-                    <div class="p-6">
-                        <span class="font-mono text-[9px] text-[#A3C4D9]">COMPLETED // FEB 2025</span>
-                        <h5 class="font-sync text-sm mt-2 group-hover:text-[#C5A16F] transition">Escape-404
-                        </h5>
-                    </div>
-                </div>
-                <!-- Past Event 5 -->
-                <div class="event-card glass-panel group event-reveal">
-                    <div class="relative overflow-hidden aspect-video">
-                        <img src="./past-Events/hackfest.png"
-                            class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all">
-                    </div>
-                    <div class="p-6">
-                        <span class="font-mono text-[9px] text-[#A3C4D9]">COMPLETED // AUG 2024</span>
-                        <h5 class="font-sync text-sm mt-2 group-hover:text-[#C5A16F] transition">Hackfest
-                        </h5>
-                    </div>
-                </div>
-
-                
-                
-            </div>
+            <div id="events-container" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
         </div>
     </section>
 
@@ -977,6 +989,49 @@
     <footer class="py-12 border-t border-gray-900 text-center text-[10px] uppercase tracking-[0.5em] text-gray-600">
         &copy; 2024 Eureka Technical Club // Beyond Boundaries
     </footer>
+
+    <!-- Admin Login Terminal (Hidden by default) -->
+    <div id="admin-terminal"
+        class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4 bg-navy/40 backdrop-blur-md">
+        <div class="terminal-box glass-panel p-8 w-full max-w-[320px] relative border-[#C5A16F]/40 shadow-2xl">
+            <!-- HUD Corners -->
+            <div class="hud-corner-tl !opacity-100"></div>
+            <div class="hud-corner-br !opacity-100"></div>
+
+            <div class="text-center mb-6">
+                <div class="font-mono text-[9px] text-[#C5A16F] tracking-[0.4em] mb-2 animate-pulse uppercase">
+                    > SECURE_ENCLAVE_ACCESS
+                </div>
+                <h3 class="font-sync text-sm tracking-tighter">ADMIN <span class="gold-gradient-text">LOGIN</span></h3>
+            </div>
+
+            <form id="terminal-form" class="space-y-5">
+                <div class="relative group">
+                    <label
+                        class="font-mono text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Node_Identity</label>
+                    <input type="text" placeholder="USER_ID"
+                        class="w-full bg-white/5 border-b border-gray-800 p-2 font-mono text-[11px] outline-none focus:border-[#C5A16F] transition-all placeholder:text-gray-700">
+                </div>
+                <div class="relative group">
+                    <label
+                        class="font-mono text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Encryption_Key</label>
+                    <input type="password" placeholder="••••••••"
+                        class="w-full bg-white/5 border-b border-gray-800 p-2 font-mono text-[11px] outline-none focus:border-[#C5A16F] transition-all placeholder:text-gray-700">
+                </div>
+
+                <button type="submit"
+                    class="w-full py-3 mt-4 border border-[#C5A16F] text-[#C5A16F] font-sync text-[10px] tracking-widest hover:bg-[#C5A16F] hover:text-navy transition-all duration-300">
+                    INITIATE_AUTH
+                </button>
+            </form>
+
+            <button onclick="closeTerminal()"
+                class="w-full mt-6 font-mono text-[8px] text-gray-600 hover:text-white transition uppercase tracking-[0.3em]">
+                [ ABORT_PROCESS ]
+            </button>
+        </div>
+    </div>
+
 </body>
 <script>
     // --- 1. 3D Background (Three.js) ---
@@ -1183,6 +1238,73 @@
             gsap.set(".achievement-reveal", { opacity: 1 });
         }
     });
+
+    // --- 1. Terminal Trigger (Logo Click) ---
+    const logo = document.querySelector('.club-logo') || document.querySelector('#hero-logo img');
+    const terminal = document.getElementById('admin-terminal');
+    const terminalBox = document.querySelector('.terminal-box');
+
+    if (logo) {
+        logo.addEventListener('click', () => {
+            // Show terminal overlay
+            terminal.classList.remove('hidden');
+
+            // Cinematic GSAP Reveal
+            gsap.to(terminalBox, {
+                scale: 1,
+                opacity: 1,
+                duration: 0.6,
+                ease: "back.out(1.7)"
+            });
+
+            // Trigger a "Scanning" glitch on the logo
+            gsap.to(logo, {
+                filter: "brightness(2) contrast(1.5) drop-shadow(0 0 30px #C5A16F)",
+                duration: 0.1,
+                yoyo: true,
+                repeat: 3
+            });
+        });
+    }
+
+    // --- 2. Close Terminal Function ---
+    function closeTerminal() {
+        gsap.to(terminalBox, {
+            scale: 0.8,
+            opacity: 0,
+            duration: 0.4,
+            ease: "power2.in",
+            onComplete: () => {
+                terminal.classList.add('hidden');
+            }
+        });
+    }
+
+    // --- 3. Mock Login Logic ---
+
+document.getElementById("terminal-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const email = e.target[0].value;
+    const password = e.target[1].value;
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if (error) {
+        alert("ACCESS DENIED");
+    } else {
+        window.location.href = "dashboard.html";
+    }
+});
+
+    // Close terminal if user clicks the background
+    terminal.addEventListener('click', (e) => {
+        if (e.target === terminal) closeTerminal();
+    });
+
 
 </script>
 

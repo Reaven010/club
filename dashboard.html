@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EUREKA | Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --navy: #0B1118;
+            --gold: #C5A16F;
+            --blue: #A3C4D9;
+        }
+
+        body {
+            background: var(--navy);
+            color: #FDF6E3;
+            font-family: 'JetBrains Mono', monospace;
+            opacity: 0;
+        }
+
+        .font-sync {
+            font-family: 'Syncopate', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(197, 161, 111, 0.15);
+        }
+
+        .sidebar-item {
+            border-left: 2px solid transparent;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .sidebar-item.active {
+            border-left-color: var(--gold);
+            background: rgba(197, 161, 111, 0.05);
+            color: var(--gold);
+        }
+
+        /* Dashboard HUD elements */
+        .hud-line {
+            height: 1px;
+            background: linear-gradient(90deg, var(--gold), transparent);
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        input,
+        select,
+        textarea {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(197, 161, 111, 0.2);
+            padding: 8px;
+            outline: none;
+            color: white;
+        }
+
+        /* Better Inputs */
+        .eureka-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(197, 161, 111, 0.2) !important;
+            padding: 12px 15px !important;
+            font-size: 11px !important;
+            font-family: 'JetBrains Mono', monospace;
+            color: white;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .eureka-input:focus {
+            border-color: var(--gold) !important;
+            background: rgba(197, 161, 111, 0.05) !important;
+            box-shadow: 0 0 15px rgba(197, 161, 111, 0.1);
+        }
+
+        /* Hexagon-ish clip for avatars */
+        .clip-hex {
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 glass-panel border-y-0 border-l-0 flex flex-col p-6 z-10">
+        <div class="mb-12">
+            <h1 class="font-sync text-xs gold-gradient-text tracking-widest">EUREKA_OS</h1>
+            <div class="hud-line"></div>
+            <p class="text-[8px] text-gray-500 uppercase mt-2">v4.0.2 // ADMIN_LEVEL_01</p>
+        </div>
+
+        <nav class="space-y-4 flex-1">
+            <div class="sidebar-item active p-3 text-[10px] tracking-widest" onclick="showTab('overview')">01_OVERVIEW
+            </div>
+            <div class="sidebar-item p-3 text-[10px] tracking-widest" onclick="showTab('events')">02_OPERATIONS</div>
+            <div class="sidebar-item p-3 text-[10px] tracking-widest" onclick="showTab('members')">03_PERSONNEL</div>
+            <div class="sidebar-item p-3 text-[10px] tracking-widest" onclick="showTab('broadcast')">04_BROADCAST</div>
+        </nav>
+
+        <a onclick="logout()" class="text-[8px] text-red-500 hover:text-white transition"> [ TERMINATE_SESSION ] </a>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 p-10 overflow-y-auto relative">
+        <!-- Floating HUD BG -->
+        <div class="absolute inset-0 opacity-5 pointer-events-none"
+            style="background-image: linear-gradient(#C5A16F 1px, transparent 1px), linear-gradient(90deg, #C5A16F 1px, transparent 1px); background-size: 50px 50px;">
+        </div>
+
+        <!-- TAB: OVERVIEW -->
+        <section id="tab-overview" class="tab-content">
+            <h2 class="font-sync text-2xl mb-8 uppercase tracking-tighter">Command <span
+                    class="text-[#C5A16F]">Overview</span></h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="glass-panel p-6">
+                    <p class="text-[9px] text-gray-500">TOTAL_NODES</p>
+                    <h3 class="text-3xl font-sync mt-2 counter" data-target="152">0</h3>
+                </div>
+                <div class="glass-panel p-6">
+                    <p class="text-[9px] text-gray-500">UPCOMING_EVENTS</p>
+                    <h3 class="text-3xl font-sync mt-2 counter" data-target="4">0</h3>
+                </div>
+                <div class="glass-panel p-6">
+                    <p class="text-[9px] text-gray-500">SYSTEM_UPTIME</p>
+                    <h3 class="text-3xl font-sync mt-2">99.8%</h3>
+                </div>
+            </div>
+
+            <div class="glass-panel p-8">
+                <h4 class="text-[10px] font-sync mb-4">// RECENT_LOGS</h4>
+                <div id="log-container" class="space-y-3 opacity-60 text-[11px]">
+                    <p>> [14:22] ADMIN connected from NODE_INTERNAL</p>
+                    <p>> [12:05] Event 'ROBO-STRATOS' entry updated</p>
+                    <p>> [09:15] New achievement recorded: 'IEEE Publication'</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: EVENTS MANAGEMENT -->
+        <section id="tab-events" class="tab-content hidden">
+            <h2 class="font-sync text-2xl mb-8 uppercase tracking-tighter">Manage <span
+                    class="text-[#C5A16F]">Events</span></h2>
+            <div class="glass-panel p-8 mb-8">
+                <h3 class="text-xs font-sync mb-6 tracking-widest text-[#A3C4D9]">+ INITIALIZE NEW EVENT</h3>
+                <div class="grid grid-cols-2 gap-6">
+                    <input type="text" placeholder="EVENT_TITLE">
+                    <input type="date">
+                    <input type="file" id="imageFile" accept="image/*">
+                    <div class="col-span-2">
+                        <img id="imagePreview"
+                            class="w-full h-40 object-cover rounded border border-[#C5A16F]/20 hidden">
+                    </div>
+                    <textarea class="col-span-2 h-24" placeholder="MISSION_DESCRIPTION"></textarea>
+                    <button id="saveBtn"
+                        class="bg-[#C5A16F] text-navy font-sync text-[10px] py-3 hover:bg-white transition">UPLOAD_POSTER
+                        & SAVE</button>
+                </div>
+            </div>
+            <div id="admin-events" class="mt-10 space-y-4"></div>
+        </section>
+
+        <!-- TAB :  Personal -->
+        <!-- TAB 03: PERSONNEL (Members) -->
+        <section id="tab-members" class="tab-content hidden">
+            <!-- Header with Trigger -->
+            <div class="flex justify-between items-end mb-10 reveal">
+                <div>
+                    <span class="text-[9px] text-gray-500 font-mono tracking-[0.5em] block mb-2 uppercase">//
+                        node_directory_v4</span>
+                    <h2 class="font-sync text-2xl uppercase tracking-tighter">Personnel <span
+                            class="text-[#C5A16F]">Registry</span></h2>
+                </div>
+                <button onclick="toggleMemberForm(true)"
+                    class="group flex items-center gap-3 border border-[#C5A16F]/40 px-6 py-3 text-[10px] font-sync hover:bg-[#C5A16F] hover:text-navy transition-all duration-500 uppercase tracking-widest">
+                    <span class="group-hover:rotate-90 transition-transform inline-block">+</span> Add_New_Node
+                </button>
+            </div>
+
+            <!-- HIDDEN FORM: THE HUD DRAWER -->
+            <div id="member-form-wrap" class="hidden overflow-hidden mb-12">
+                <div class="glass-panel p-10 relative border-[#C5A16F]/30 bg-[#0B1118]/80 backdrop-blur-xl">
+                    <!-- HUD Decorative Corners -->
+                    <div class="absolute top-0 left-0 w-10 h-10 border-t border-l border-[#C5A16F]/60"></div>
+                    <div class="absolute bottom-0 right-0 w-10 h-10 border-b border-r border-[#C5A16F]/60"></div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <!-- Data Inputs -->
+                        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="flex flex-col gap-2">
+                                <label
+                                    class="text-[8px] font-mono text-gray-500 uppercase tracking-[0.3em]">Identity_Name</label>
+                                <input id="m-name" placeholder="E.G. NIKOLA TESLA" class="eureka-input">
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label
+                                    class="text-[8px] font-mono text-gray-500 uppercase tracking-[0.3em]">Designation_Role</label>
+                                <input id="m-role" placeholder="E.G. LEAD ENGINEER" class="eureka-input">
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label
+                                    class="text-[8px] font-mono text-gray-500 uppercase tracking-[0.3em]">Core_Specialization</label>
+                                <input id="m-spec" placeholder="E.G. COGNITIVE AI" class="eureka-input">
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label
+                                    class="text-[8px] font-mono text-gray-500 uppercase tracking-[0.3em]">Operational_Division</label>
+                                <select id="m-team" class="eureka-input appearance-none cursor-pointer">
+                                    <option value="tech">TECH_CORE</option>
+                                    <option value="randd">R&D_LABS</option>
+                                    <option value="design">VISUAL_INTEL</option>
+                                    <option value="corporate">OPS_MANAGEMENT</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Image Upload / Bio-Scan -->
+                        <div class="flex flex-col gap-2">
+                            <label
+                                class="text-[8px] font-mono text-gray-500 uppercase tracking-[0.3em]">Biometric_Profile</label>
+                            <div class="relative group h-full">
+                                <input type="file" id="m-image" accept="image/*"
+                                    class="absolute inset-0 opacity-0 z-10 cursor-pointer">
+                                <div
+                                    class="h-full border border-dashed border-white/10 flex flex-col items-center justify-center p-4 group-hover:border-[#C5A16F]/50 transition-colors">
+                                    <span class="text-2xl mb-2 opacity-30">📸</span>
+                                    <p class="text-[9px] text-gray-600 text-center uppercase tracking-widest">
+                                        Select_File_To_Scan</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 mt-10">
+                        <button id="addMemberBtn"
+                            class="flex-1 bg-[#C5A16F] text-navy font-sync text-[10px] py-4 hover:tracking-[0.2em] transition-all duration-500">
+                            AUTHORIZE_AND_INITIALIZE_NODE
+                        </button>
+                        <button onclick="toggleMemberForm(false)"
+                            class="px-8 border border-white/10 text-[9px] font-mono hover:text-red-500 transition uppercase">
+                            Abort_Process
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLE: THE LOG -->
+            <div class="glass-panel overflow-hidden border-white/5">
+                <table class="w-full text-left text-[11px] font-mono">
+                    <thead class="bg-white/5 text-gray-500 uppercase tracking-[0.3em] text-[8px]">
+                        <tr>
+                            <th class="p-6 border-b border-white/5">Identity_Node</th>
+                            <th class="p-6 border-b border-white/5">Designation</th>
+                            <th class="p-6 border-b border-white/5">Division</th>
+                            <th class="p-6 border-b border-white/5">Status</th>
+                            <th class="p-6 border-b border-white/5 text-right">Auth_Override</th>
+                        </tr>
+                    </thead>
+                    <tbody id="member-table-body" class="divide-y divide-white/5">
+                        <!-- Dynamic Content Here -->
+
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Brodcast -->
+
+        <section id="tab-broadcast" class="tab-content hidden">
+            <h2 class="font-sync text-2xl mb-8 uppercase tracking-tighter">Global <span
+                    class="text-[#C5A16F]">Broadcast</span></h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <!-- Composer -->
+                <div class="glass-panel p-8">
+                    <h3 class="text-[10px] font-sync mb-8 tracking-widest text-[#A3C4D9]">// COMPOSE_TRANSMISSION</h3>
+                    <div class="space-y-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] text-gray-500 uppercase">Priority_Level</label>
+                            <select id="b-priority"
+                                class="bg-white/5 border border-white/10 p-3 outline-none text-[#C5A16F]">
+                                <option>LOW_LATENCY</option>
+                                <option>MID_FREQ</option>
+                                <option>CRITICAL_OVERRIDE</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] text-gray-500 uppercase">Message_Payload</label>
+                            <textarea id="b-message"
+                                class="bg-white/5 border border-white/10 p-3 h-40 outline-none focus:border-[#C5A16F]"
+                                placeholder="ENTER_ANNOUNCEMENT..."></textarea>
+                        </div>
+                        <button id="broadcastBtn"
+                            class="w-full bg-[#C5A16F] text-navy font-sync text-[10px] py-4 hover:bg-white shadow-lg shadow-[#C5A16F]/20 transition tracking-[0.2em]">
+                            EXECUTE_BROADCAST
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Preview / Sent Status -->
+                <div class="flex flex-col gap-6">
+                    <div class="glass-panel p-8 flex-1 border-dashed opacity-50">
+                        <p class="font-mono text-[10px] text-gray-600 mb-4 tracking-widest">TRANSMISSION_PREVIEW</p>
+                        <div class="border-l-2 border-[#C5A16F] pl-6 py-4">
+                            <h4 class="font-sync text-xs text-white mb-2">TITLE: [AWAITING_INPUT]</h4>
+                            <p class="text-[11px] text-gray-500 italic">No data currently in buffer...</p>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-6 bg-[#C5A16F]/5">
+                        <p class="text-[9px] text-[#C5A16F] font-mono tracking-widest mb-2">HISTORY_LOG</p>
+                        <ul id="broadcast-list" class="text-[10px] space-y-2 font-mono opacity-60">
+                            <li>[SENT] 2h ago: Registration open for Robo-Stratos</li>
+                            <li>[SENT] 1d ago: Meeting scheduled for Node Leads</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+
+        // --- 1. Supabase Initialization ---
+        if (!window.supabaseClient) {
+            window.supabaseClient = window.supabase.createClient(
+                "https://eegcyreyyeuihnspasbh.supabase.co",
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlZ2N5cmV5eWV1aWhuc3Bhc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0ODU3MTMsImV4cCI6MjA5MTA2MTcxM30.QwndBP4Hj3k3q-jcjGN1sXzZt45_p0or_4JnRyB5E-w"
+            );
+        }
+        var supabase = window.supabaseClient;
+        // first get authentication
+        (async () => {
+            const { data, error } = await supabase.auth.getSession();
+
+            console.log("SESSION:", data);
+
+            if (!data || !data.session) {
+                console.log("NO SESSION → REDIRECT");
+                window.location.href = "index.html";
+                return;
+            }
+
+            console.log("USER LOGGED IN");
+        })();
+        // --- 2. Global State ---
+        let editingId = null;
+        let currentImage = "";
+        const saveBtn = document.getElementById("saveBtn");
+        const inputs = document.querySelectorAll("#tab-events input");
+        const textarea = document.querySelector("#tab-events textarea");
+        const fileInput = document.getElementById("imageFile");
+
+        // --- 3. Save / Update Logic ---
+        saveBtn.addEventListener("click", async () => {
+            saveBtn.innerText = "PROCESSING...";
+            saveBtn.disabled = true;
+
+            const title = inputs[0].value;
+            const date = inputs[1].value;
+            const description = textarea.value;
+            const file = fileInput.files[0];
+
+            if (!title || !date || !description) {
+                showToast("ALL FIELDS REQUIRED", true);
+                saveBtn.innerText = "UPLOAD_POSTER & SAVE";
+                saveBtn.disabled = false;
+                return;
+            }
+
+            let imageUrl = currentImage; // default = old image
+
+            // ✅ Upload ONLY ONCE
+            if (file) {
+                const uploadedUrl = await uploadImage(file);
+                if (uploadedUrl) {
+                    imageUrl = uploadedUrl;
+                }
+            }
+            console.log("Final Image URL:", imageUrl);
+            let result;
+
+            if (editingId) {
+                result = await supabase
+                    .from("events")
+                    .update({
+                        title,
+                        date,
+                        description,
+                        image: imageUrl
+                    })
+                    .eq("id", editingId);
+            } else {
+                result = await supabase
+                    .from("events")
+                    .insert([
+                        { title, date, description, image: imageUrl }
+                    ]);
+            }
+
+            if (result.error) {
+                showToast("DATABASE ERROR", true);
+            } else {
+                showToast(editingId ? "MISSION UPDATED" : "NEW MISSION INITIALIZED");
+                resetForm();
+                loadAdminEvents();
+            }
+
+            saveBtn.innerText = "UPLOAD_POSTER & SAVE";
+            saveBtn.disabled = false;
+        });
+
+        // --- 4. Helper Functions ---
+
+        async function uploadImage(file) {
+            const fileName = Date.now() + "-" + file.name;
+
+            const { error } = await supabase.storage
+                .from("event-images")
+                .upload(fileName, file);
+
+            if (error) {
+                console.error("UPLOAD ERROR:", error);
+                return null;
+            }
+
+            // ✅ CORRECT WAY
+            const { data } = supabase.storage
+                .from("event-images")
+                .getPublicUrl(fileName);
+
+            return data.publicUrl;
+        }
+
+        async function loadAdminEvents() {
+            const { data, error } = await supabase
+                .from("events")
+                .select("*")
+                .order("date", { ascending: false });
+
+            if (!error) displayAdminEvents(data);
+        }
+
+        function displayAdminEvents(events) {
+            const container = document.getElementById("admin-events");
+            container.innerHTML = `<h4 class="text-[10px] font-sync mb-4 text-gray-500">// CURRENT_OPERATIONS_LOG</h4>`;
+
+            events.forEach(event => {
+                const card = `
+            <div class="glass-panel p-4 flex justify-between items-center group hover:border-[#C5A16F] transition-all">
+                <div>
+                    <h3 class="font-sync text-sm gold-gradient-text">${event.title}</h3>
+                    <p class="text-[10px] text-gray-500 font-mono mt-1">${event.date}</p>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="editEvent('${event.id}')" class="text-[9px] font-sync text-blue-400 hover:text-white transition uppercase">[ Edit ]</button>
+                    <button onclick="deleteEvent('${event.id}')" class="text-[9px] font-sync text-red-500 hover:text-white transition uppercase">[ Delete ]</button>
+                </div>
+            </div>`;
+                container.innerHTML += card;
+            });
+        }
+
+        async function deleteEvent(id) {
+            if (!confirm("CONFIRM COMMAND: DELETE DATA NODE?")) return;
+
+            // 1️⃣ Get event data first
+            const { data, error: fetchError } = await supabase
+                .from("events")
+                .select("image")
+                .eq("id", id)
+                .single();
+
+            if (fetchError) {
+                console.error(fetchError);
+                return;
+            }
+
+            const imageUrl = data.image;
+
+            // 2️⃣ Delete DB row
+            const { error: deleteError } = await supabase
+                .from("events")
+                .delete()
+                .eq("id", id);
+
+            if (deleteError) {
+                console.error(deleteError);
+                showToast(editingId ? "MISSION UPDATED" : "NEW MISSION INITIALIZED");
+                return;
+            }
+
+            // 3️⃣ Delete image from storage
+            if (imageUrl) {
+                const fileName = imageUrl.split("/").pop();
+                console.log("Deleing File: ", fileName)
+
+                const { error: storageError } = await supabase.storage
+                    .from("event-images")
+                    .remove([fileName]);
+
+                if (storageError) {
+                    console.warn("Image delete failed:", storageError);
+                    console.log("Storage delete error:", storageError);
+                }
+            }
+
+            // 4️⃣ Refresh UI
+            loadAdminEvents();
+        }
+
+        async function editEvent(id) {
+            const { data, error } = await supabase
+                .from("events")
+                .select("*")
+                .eq("id", id)
+                .single();
+
+            if (data) {
+                inputs[0].value = data.title;
+                inputs[1].value = data.date;
+                textarea.value = data.description;
+
+                currentImage = data.image;
+                editingId = id;
+                saveBtn.innerText = "UPDATE_EXISTING_NODE";
+
+                // 🔥 SHOW CURRENT IMAGE
+                if (data.image) {
+                    const preview = document.getElementById("imagePreview");
+                    preview.src = data.image;
+                    preview.classList.remove("hidden");
+                }
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function resetForm() {
+            inputs[0].value = "";
+            inputs[1].value = "";
+            textarea.value = "";
+            fileInput.value = "";
+            currentImage = "";
+            editingId = null;
+
+            const preview = document.getElementById("imagePreview");
+            preview.src = "";
+            preview.classList.add("hidden");
+
+            saveBtn.innerText = "UPLOAD_POSTER & SAVE";
+        }
+
+        // --- 5. Lifecycle ---
+        window.onload = () => {
+            gsap.to("body", { opacity: 1, duration: 1, ease: "power.out" });
+            loadAdminEvents(); // Load events immediately
+
+            // Counter Animation logic
+            document.querySelectorAll('.counter').forEach(c => {
+                const target = +c.dataset.target;
+                gsap.to(c, { innerText: target, duration: 2, snap: { innerText: 1 }, ease: "power2.out" });
+            });
+            loadMembers();
+            loadBroadcasts();
+        };
+
+        function showTab(id) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.getElementById('tab-' + id).classList.remove('hidden');
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            gsap.from('#tab-' + id, { y: 10, opacity: 0, duration: 0.4 });
+        }
+        function addLog(msg) {
+            const logContainer = document.getElementById('log-container');
+            const now = new Date();
+            const time = `[${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}]`;
+
+            const log = document.createElement('p');
+            log.innerHTML = `> ${time} ${msg.toUpperCase()}`;
+            log.style.opacity = "0";
+            logContainer.prepend(log); // Adds new log to top
+
+            gsap.to(log, { opacity: 1, duration: 0.5 });
+        }
+        fileInput.addEventListener("change", () => {
+            const file = fileInput.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    const preview = document.getElementById("imagePreview");
+                    preview.src = e.target.result;
+                    preview.classList.remove("hidden");
+                };
+
+                reader.readAsDataURL(file);
+            }
+        });
+        function showToast(message, isError = false) {
+            const toast = document.getElementById("toast");
+
+            toast.innerText = message;
+            toast.style.background = isError ? "#ff4d4d" : "#C5A16F";
+            toast.style.color = isError ? "white" : "black";
+
+            toast.classList.remove("opacity-0");
+            toast.classList.add("opacity-100");
+
+            setTimeout(() => {
+                toast.classList.remove("opacity-100");
+                toast.classList.add("opacity-0");
+            }, 2500);
+        }
+        // --- 6. Personnel Form Toggle Logic ---
+        function toggleMemberForm(show) {
+            const wrap = document.getElementById('member-form-wrap');
+
+            if (show) {
+                wrap.classList.remove('hidden');
+                // Cinematic reveal from top
+                gsap.fromTo(wrap,
+                    { height: 0, opacity: 0 },
+                    { height: "auto", opacity: 1, duration: 0.8, ease: "expo.out" }
+                );
+                addLog("Initiating Personnel Registration Protocol...");
+            } else {
+                gsap.to(wrap, {
+                    height: 0,
+                    opacity: 0,
+                    duration: 0.5,
+                    ease: "power2.in",
+                    onComplete: () => wrap.classList.add('hidden')
+                });
+                addLog("Registration Aborted.");
+            }
+        }
+
+        // Optional: Add a listener to close form if user switches tabs
+        function showTab(id) {
+            toggleMemberForm(false); // Close form when leaving the personnel tab
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.getElementById('tab-' + id).classList.remove('hidden');
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            gsap.from('#tab-' + id, { y: 10, opacity: 0, duration: 0.4 });
+        }
+        function addLog(msg) {
+            const logContainer = document.getElementById('log-container');
+
+            // SAFETY CHECK: If logContainer doesn't exist, stop the function
+            if (!logContainer) {
+                console.warn("Log container not found in DOM.");
+                return;
+            }
+
+            const now = new Date();
+            const time = `[${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}]`;
+
+            const log = document.createElement('p');
+            log.innerHTML = `> ${time} ${msg.toUpperCase()}`;
+            log.style.opacity = "0";
+            logContainer.prepend(log);
+
+            gsap.to(log, { opacity: 1, duration: 0.5 });
+        }
+
+        // ================= MEMBER SYSTEM =================
+
+        async function loadMembers() {
+            const { data, error } = await supabase
+                .from("members")
+                .select("*")
+                .order("team_id");
+
+            if (error) {
+                console.error(error);
+                return;
+            }
+            data.sort((a, b) => {
+                const priority = {
+                    "Team Lead": 1,
+                    "Co-Lead": 2,
+                    "Member": 3
+                };
+
+                return (priority[a.role] || 99) - (priority[b.role] || 99);
+            });
+            const tbody = document.getElementById("member-table-body");
+
+            tbody.innerHTML = data.map(m => `
+        <tr class="hover:bg-white/5 transition-colors group">
+            <td class="p-6 flex items-center gap-4">
+                <img src="${m.image}" class="w-10 h-10 object-cover clip-hex border border-white/10">
+                <span class="font-sync text-[10px] tracking-tighter">${m.name}</span>
+            </td>
+            <td class="p-6 text-[#A3C4D9]">${m.role}</td>
+            <td class="p-6 opacity-40">${m.team_id}</td>
+            <td class="p-6"><span class="text-green-500 text-[8px]">● ACTIVE</span></td>
+            <td class="p-6 text-right">
+                <button onclick="deleteMember('${m.id}')"
+                class="text-red-500 text-[9px]">[DELETE]</button>
+            </td>
+        </tr>
+    `).join('');
+        }
+        // ================= ADD MEMBER =================
+
+        document.getElementById("addMemberBtn").addEventListener("click", async () => {
+
+            const name = document.getElementById("m-name").value;
+            const role = document.getElementById("m-role").value;
+            const spec = document.getElementById("m-spec").value;
+            const team_id = document.getElementById("m-team").value;
+            const file = document.getElementById("m-image").files[0];
+
+            // 🔴 validation
+            if (!name || !role) {
+                alert("Fill required fields");
+                return;
+            }
+
+            let imageUrl = "";
+
+            // 🔥 upload image
+            if (file) {
+                const fileName = Date.now() + "-" + file.name;
+
+                const { error: uploadError } = await supabase.storage
+                    .from("team-images")
+                    .upload(fileName, file);
+
+                if (uploadError) {
+                    console.error("UPLOAD ERROR:", uploadError);
+                    return;
+                }
+
+                const { data } = supabase.storage
+                    .from("team-images")
+                    .getPublicUrl(fileName);
+
+                imageUrl = data.publicUrl;
+            }
+
+            // 🔥 insert into DB
+            const { error } = await supabase
+                .from("members")
+                .insert([{
+                    name,
+                    role,
+                    spec,
+                    team_id,
+                    image: imageUrl
+                }]);
+
+            if (error) {
+                console.error("INSERT ERROR:", error);
+            } else {
+                addLog("New member added");
+                alert("MEMBER ADDED");
+
+                // 🔥 CLEAR FORM
+                document.getElementById("m-name").value = "";
+                document.getElementById("m-role").value = "";
+                document.getElementById("m-spec").value = "";
+                document.getElementById("m-image").value = "";
+                document.getElementById("m-team").value = "tech";
+
+                loadMembers();
+
+                // 🔥 AUTO CLOSE FORM (THIS IS STEP 4.4)
+                toggleMemberForm(false);
+            }
+        });
+        // ================= LOAD MEMBERS =================
+
+        async function loadMembers() {
+            const { data, error } = await supabase
+                .from("members")
+                .select("*")
+                .order("team_id");
+
+            if (error) {
+                console.error("LOAD ERROR:", error);
+                return;
+            }
+
+            const tbody = document.getElementById("member-table-body");
+
+            tbody.innerHTML = data.map(m => `
+        <tr class="hover:bg-white/5 transition-colors group">
+            <td class="p-6 flex items-center gap-4">
+                <img src="${m.image || ''}" 
+                     class="w-10 h-10 object-cover clip-hex border border-white/10">
+                <span class="font-sync text-[10px] tracking-tighter">${m.name}</span>
+            </td>
+
+            <td class="p-6 text-[#A3C4D9]">${m.role}</td>
+
+            <td class="p-6 opacity-40">${m.team_id}</td>
+
+            <td class="p-6">
+                <span class="text-green-500 text-[8px]">● ONLINE</span>
+            </td>
+
+            <td class="p-6 text-right">
+                <button onclick="deleteMember('${m.id}')"
+                    class="text-red-500 text-[9px] hover:text-white transition">
+                    [DELETE]
+                </button>
+            </td>
+        </tr>
+    `).join('');
+        }
+        async function deleteMember(id) {
+            if (!confirm("CONFIRM: DELETE MEMBER NODE?")) return;
+
+            const { error } = await supabase
+                .from("members")
+                .delete()
+                .eq("id", id);
+
+            if (error) {
+                console.error(error);
+                alert("DELETE FAILED");
+            } else {
+                addLog("Member removed");
+                loadMembers();
+            }
+        }
+        document.addEventListener("DOMContentLoaded", () => {
+
+            const broadcastBtn = document.getElementById("broadcastBtn");
+
+            if (!broadcastBtn) {
+                console.error("Broadcast button not found");
+                return;
+            }
+
+            broadcastBtn.addEventListener("click", async () => {
+
+                const message = document.getElementById("b-message").value;
+                const priority = document.getElementById("b-priority").value;
+
+                if (!message) {
+                    showToast("MESSAGE REQUIRED", true);
+                    return;
+                }
+
+                broadcastBtn.innerText = "TRANSMITTING...";
+                broadcastBtn.disabled = true;
+
+                const { error } = await supabase
+                    .from("broadcasts")
+                    .insert([{ message, priority }]);
+
+                if (error) {
+                    console.error(error);
+                    showToast("BROADCAST FAILED", true);
+                } else {
+                    showToast("TRANSMISSION SENT");
+                    document.getElementById("b-message").value = "";
+                    loadBroadcasts();
+                }
+
+                broadcastBtn.innerText = "EXECUTE_BROADCAST";
+                broadcastBtn.disabled = false;
+            });
+
+        });
+        async function loadBroadcasts() {
+            const { data, error } = await supabase
+                .from("broadcasts")
+                .select("*")
+                .order("created_at", { ascending: false });
+
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            const container = document.getElementById("broadcast-list");
+            container.innerHTML = "";
+
+            data.forEach(b => {
+                const li = document.createElement("li");
+                li.innerText = `[${b.priority}] ${b.message}`;
+                container.appendChild(li);
+            });
+        }
+        async function logout() {
+            await supabase.auth.signOut();
+            window.location.href = "index.html";
+        }
+    </script>
+    <div id="toast"
+        class="fixed bottom-5 right-5 px-4 py-2 text-xs font-sync bg-[#C5A16F] text-black rounded shadow-lg opacity-0 transition-all duration-300 pointer-events-none">
+        MESSAGE
+    </div>
+</body>
+
+</html>

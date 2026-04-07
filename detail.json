@@ -1,0 +1,90 @@
+{
+  "content": {
+    "title": "Content Department",
+    "subtitle": "Where words turn into influence",
+    "tag": "UNIT // CO-01",
+    "members": [
+      { "name": "ANUSHKA UPADHYAY", "role": "Team Lead", "spec": "idk", "img": "content-team/anushka-upadhyay.png" },
+      { "name": "Medha Kaushik", "role": "Co-Lead", "spec": "idk", "img": "content-team/medha-kaushik.png" },
+      { "name": "ANSHIK PANDA", "role": "Member", "spec": "idk", "img": "content-team/anshik-panda.png" },
+      { "name": "Samriddhi Gupta", "role": "Member", "spec": "idk", "img": "content-team/samriddhi-gupta.png" }
+    ]
+  },
+  "design": {
+    "title": "Design Department",
+    "subtitle": "Designing visuals that define identity",
+    "tag": "UNIT // DE-02",
+    "members": [
+      { "name": "SOPHIA VERGHESE", "role": "Team Lead", "spec": "idk", "img": "design-team/sophia-verghese.png" },
+      { "name": "ASHESH NATH YADAV", "role": "Co-Lead", "spec": "idk", "img": "design-team/ashesh-nath-yadav.png" },
+      { "name": "Shresth Shukla", "role": "Member", "spec": "idk", "img": "design-team/shreshth-shukla.png" },
+      { "name": "GAURAV JAIN", "role": "Member", "spec": "idk", "img": "design-team/gaurav-jain.png" }
+    ]
+  },
+  "tech": {
+    "title": "Technical Department",
+    "subtitle": "Engineering the unseen",
+    "tag": "UNIT // TE-03",
+    "members": [
+      { "name": "SWANIK SRIVASTAVA", "role": "Team Lead", "spec": "idk", "img": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6" },
+      { "name": "poorvansh jain", "role": "Co-Lead", "spec": "idk", "img": "tech-team/Poorvansh-jain.png" },
+      { "name": "UNNATI LOHANA", "role": "Member", "spec": "idk", "img": "tech-team/unnati-lohana.png" },
+      { "name": "Daksh Jain", "role": "Member", "spec": "idk", "img": "tech-team/daksh-jain.png" },
+      { "name": "Sayujya tiwari", "role": "Member", "spec": "idk", "img": "tech-team/sayujya-tiwari.png" }
+    ]
+  },
+  "randd": {
+    "title": "Research and Development Department",
+    "subtitle": "Innovate. Experiment. Evolve.",
+    "tag": "UNIT // RD-04",
+    "members": [
+      { "name": "DIVYANSH AGARWAL", "role": "Team Lead", "spec": "idk", "img": "r&d-team/divyansh-agrawal.png" },
+      { "name": "ADITYA JHAWAR", "role": "Co-Lead", "spec": "idk", "img": "r&d-team/additya-jhawar.png" },
+      { "name": "Animesh arjariya", "role": "Member", "spec": "idk", "img": "r&d-team/animesh-arjariya.png" },
+      { "name": "Harsh Singh", "role": "Member", "spec": "idk", "img": "r&d-team/harsh-singh.png" }
+    ]
+  },
+  "corporate": {
+    "title": "Corporate Department",
+    "subtitle": "Connecting strategy with opportunity",
+    "tag": "UNIT // CO-05",
+    "members": [
+      { "name": "Parth gaur", "role": "Team Lead", "spec": "idk", "img": "corporate-team/parth-gaur.png" },
+      { "name": "Akhillesh Raj A", "role": "Co-Lead", "spec": "idk", "img": "corporate-team/akhillesh-raj-a.png" },
+      { "name": "Amogha Rathore", "role": "Member", "spec": "idk", "img": "corporate-team/amogha-rathore.png" },
+      { "name": "YASH YADAV", "role": "Member", "spec": "idk", "img": "corporate-team/yash-yadav.png" }
+    ]
+  },
+  "stage": {
+    "title": "Stage Department",
+    "subtitle": "Bringing events to life on stage",
+    "tag": "UNIT // ST-06",
+    "members": [
+      { "name": "VRINDA JAIN", "role": "Team Lead", "spec": "idk", "img": "stage-team/vrinda-jain.png" },
+      { "name": "idk", "role": "Co-Lead", "spec": "idk", "img": "https://images.unsplash.com/photo-1534528741775-53994a69daeb" },
+      { "name": "idk", "role": "Member", "spec": "idk", "img": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d" }
+    ]
+  },
+  "media": {
+    "title": "Media Department",
+    "subtitle": "Frames. Stories. Impact.",
+    "tag": "UNIT // ME-07",
+    "members": [
+      { "name": "Shivam Ghalme", "role": "Team Lead", "spec": "idk", "img": "media-team/shivam-ghalme.png" },
+      { "name": "idk", "role": "Co-Lead", "spec": "idk", "img": "https://images.unsplash.com/photo-1534528741775-53994a69daeb" },
+      { "name": "Sahil Kiran Wadhai", "role": "Member", "spec": "idk", "img": "media-team/sahil-kiran-wadhai.png" }
+    ]
+  },
+  "event": {
+    "title": "Event Department",
+    "subtitle": "Where ideas turn into events",
+    "tag": "UNIT // EA-08",
+    "members": [
+      { "name": "Rudraksh Mishra", "role": "Team Lead", "spec": "idk", "img": "event-team/rudraksh-mishra.png" },
+      { "name": "Aryan Mishra", "role": "Co-Lead", "spec": "idk", "img": "event-team/aryan-mishra.png" },
+      { "name": "Avnish Gawande", "role": "Member", "spec": "idk", "img": "event-team/avnish-gawande.png" },
+      { "name": "Rakhi Tyagi", "role": "Member", "spec": "idk", "img": "event-team/rakhi-tyagi.png" },
+      { "name": "Saanya Mittal", "role": "Member", "spec": "idk", "img": "event-team/saanya-mittal.png" }
+    ]
+  }
+}
