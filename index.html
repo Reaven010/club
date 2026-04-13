@@ -452,11 +452,70 @@
         .btn-eureka:hover::after {
             left: 100%;
         }
+
+        /* sliding in upcomming */
+        #upcoming-event {
+            will-change: transform;
+        }
+
+        #left-arrow,
+        #right-arrow {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 10px rgba(197, 161, 111, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgba(197, 161, 111, 0.5);
+            }
+        }
+
+        /* glow tracking */
+        #event-wrapper::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(197, 161, 111, 0.15), transparent 60%);
+            opacity: 0;
+            transition: 0.3s;
+            pointer-events: none;
+        }
+
+        #event-wrapper:hover::before {
+            opacity: 1;
+        }
+
+        /* hide scroll bar  */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* active card */
+        .event-card {
+    transition: transform 0.4s ease, opacity 0.4s ease;
+    opacity: 0.5;
+}
+
+.event-card.active {
+    transform: scale(1.05);
+    opacity: 1;
+}
     </style>
 </head>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+    let upcomingEventsList = [];
+    let currentEventIndex = 0;
     const roleOrder = {
         "President": 1,
         "Vice President": 2,
@@ -503,70 +562,109 @@
 
     function renderUpcomingEvent(events) {
         const container = document.getElementById("upcoming-event");
+        const leftArrow = document.getElementById("left-arrow");
+        const rightArrow = document.getElementById("right-arrow");
 
+        // hide if only 1 event
+        if (events.length <= 1) {
+            leftArrow.style.display = "none";
+            rightArrow.style.display = "none";
+        } else {
+            leftArrow.style.display = "block";
+            rightArrow.style.display = "block";
+        }
         if (!events || events.length === 0) {
             container.innerHTML = `
-  <div class="flex flex-col lg:flex-row items-center justify-center text-center min-h-[300px] p-10">
-
-    <div class="lg:w-1/2 flex flex-col items-center justify-center">
-
-      <div class="mb-6 text-[#C5A16F] font-mono text-[10px] tracking-[0.3em] animate-pulse">
-        // NO_ACTIVE_TRANSMISSIONS
-      </div>
-
-      <h4 class="text-2xl font-sync mb-4 gold-gradient-text">
-        No Upcoming Events
-      </h4>
-
-      <p class="text-gray-500 text-sm max-w-md leading-relaxed">
-        The system is currently idle. New missions will be deployed soon. 
-        Stay connected to receive the next transmission.
-      </p>
-
-      <div class="mt-6 border border-[#C5A16F]/30 px-6 py-2 text-[10px] font-mono tracking-widest opacity-60">
-        STATUS: STANDBY
-      </div>
-
-    </div>
-
-  </div>
-`;
+        <div class="flex flex-col lg:flex-row items-center justify-center text-center min-h-[300px] p-10">
+            <p class="text-gray-500">No upcoming events</p>
+        </div>`;
             return;
         }
 
-        const event = events[0]; // nearest future event
+        // ✅ store events
+        upcomingEventsList = events;
+        currentEventIndex = 0;
 
-        container.innerHTML = `
-    <div class="flex flex-col lg:flex-row">
-
-      <div class="lg:w-1/2 overflow-hidden aspect-video relative">
-        <img src="${event.image}" 
-             class="w-full h-full object-cover">
-        <div class="absolute top-6 left-6 bg-[#C5A16F] text-navy px-4 py-1 text-[10px]">
-          LIVE_UPCOMING
-        </div>
-      </div>
-
-      <div class="lg:w-1/2 p-10 flex flex-col justify-center">
-        <span class="font-mono text-[#C5A16F] text-xs mb-2">
-          ${event.date}
-        </span>
-
-        <h4 class="text-3xl font-sync mb-6">
-          ${event.title}
-        </h4>
-
-        <p class="text-gray-400 mb-8">
-          ${event.description}
-        </p>
-
-        <button class="btn-eureka">Register Node</button>
-      </div>
-
-    </div>
-  `;
+        // ✅ show first event
+        showEvent();
     }
 
+    function showEvent(direction = 1) {
+        const container = document.getElementById("upcoming-event");
+
+        // 🔻 Animate OUT (current)
+        gsap.to(container, {
+            x: direction * -100,   // move left/right
+            opacity: 0,
+            duration: 0.3,
+            ease: "power2.in",
+            onComplete: () => {
+
+                const event = upcomingEventsList[currentEventIndex];
+
+                // 🔁 Update content
+                container.innerHTML = `
+            <div class="flex flex-col lg:flex-row">
+
+              <div class="lg:w-1/2 overflow-hidden aspect-video relative">
+                <img src="${event.image}" 
+                     class="w-full h-full object-cover">
+                <div class="absolute top-6 left-6 bg-[#C5A16F] text-navy px-4 py-1 text-[10px]">
+                  LIVE_UPCOMING
+                </div>
+              </div>
+
+              <div class="lg:w-1/2 p-10 flex flex-col justify-center">
+                <span class="font-mono text-[#C5A16F] text-xs mb-2">
+                  ${event.date}
+                </span>
+
+                <h4 class="text-3xl font-sync mb-6">
+                  ${event.title}
+                </h4>
+
+                <p class="text-gray-400 mb-8">
+                  ${event.description}
+                </p>
+
+                <button class="btn-eureka">Register Node</button>
+              </div>
+
+            </div>
+            `;
+
+                // 🔺 Reset position (offscreen opposite side)
+                gsap.set(container, {
+                    x: direction * 100
+                });
+
+                // 🔺 Animate IN (new)
+                gsap.to(container, {
+                    x: 0,
+                    opacity: 1,
+                    duration: 0.4,
+                    ease: "power2.out"
+                });
+            }
+        });
+    }
+
+    function changeEvent(direction) {
+        if (!upcomingEventsList.length) return;
+
+        currentEventIndex += direction;
+
+        // 🔁 loop (no dead ends)
+        if (currentEventIndex < 0) {
+            currentEventIndex = upcomingEventsList.length - 1;
+        }
+
+        if (currentEventIndex >= upcomingEventsList.length) {
+            currentEventIndex = 0;
+        }
+
+        showEvent(direction);
+    }
     //load past event
 
     function renderPastEvents(events) {
@@ -581,7 +679,7 @@
 
         events.forEach(event => {
             container.innerHTML += `
-      <div class="event-card glass-panel group">
+      <div class="event-card glass-panel group min-w-[300px] max-w-[300px] snap-center">
         <div class="relative overflow-hidden aspect-video">
           <img src="${event.image}" 
                class="w-full h-full object-cover grayscale group-hover:grayscale-0">
@@ -762,15 +860,79 @@
             <!-- Upcoming Events: High-Impact Featured Card -->
             <div class="mb-20">
                 <h3 class="font-sync text-xs text-[#A3C4D9] mb-8 tracking-[0.4em]">// INCOMING_TRANSMISSION</h3>
-                <div class="glass-panel p-1 rounded-none group relative overflow-hidden upcoming-event-reveal">
-                    <div id="upcoming-event"></div>
-                </div>
-            </div>
+                <div class="relative">
+                    <div id="event-wrapper" class="relative group">
 
-            <!-- Previous Events: Horizontal Scroll/Grid -->
-            <h3 class="font-sync text-xs text-gray-500 mb-8 tracking-[0.4em]">// MISSION_ARCHIVE</h3>
-            <div id="past-events" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
-        </div>
+                        <!-- LEFT -->
+                        <button id="left-arrow" onclick="changeEvent(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 z-20 
+               w-12 h-12 flex items-center justify-center
+               rounded-full border border-[#C5A16F]/30
+               text-[#C5A16F] text-xl
+               bg-[#0B1118]/40 backdrop-blur-md
+               opacity-0 group-hover:opacity-100
+               transition-all duration-300
+               hover:bg-[#C5A16F] hover:text-[#0B1118]
+               hover:scale-110">
+                            ←
+                        </button>
+
+                        <!-- RIGHT -->
+                        <button id="right-arrow" onclick="changeEvent(1)" class="absolute right-4 top-1/2 -translate-y-1/2 z-20 
+               w-12 h-12 flex items-center justify-center
+               rounded-full border border-[#C5A16F]/30
+               text-[#C5A16F] text-xl
+               bg-[#0B1118]/40 backdrop-blur-md
+               opacity-0 group-hover:opacity-100
+               transition-all duration-300
+               hover:bg-[#C5A16F] hover:text-[#0B1118]
+               hover:scale-110">
+                            →
+                        </button>
+
+                        <!-- ORIGINAL CONTENT -->
+                        <div class="glass-panel p-1 rounded-none group relative overflow-hidden upcoming-event-reveal">
+                            <div id="upcoming-event"></div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Previous Events: Horizontal Scroll/Grid -->
+                <h3 class="font-sync text-xs text-gray-500 mb-8 tracking-[0.4em]">// MISSION_ARCHIVE</h3>
+                <div id="past-wrapper" class="relative group">
+
+                    <!-- LEFT -->
+                    <button onclick="scrollPast(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 z-20 
+               w-12 h-12 flex items-center justify-center
+               rounded-full border border-[#C5A16F]/30
+               text-[#C5A16F] text-xl
+               bg-[#0B1118]/40 backdrop-blur-md
+               opacity-0 group-hover:opacity-100
+               transition-all duration-300
+               hover:bg-[#C5A16F] hover:text-[#0B1118]
+               hover:scale-110">
+                        ←
+                    </button>
+
+                    <!-- RIGHT -->
+                    <button onclick="scrollPast(1)" class="absolute right-4 top-1/2 -translate-y-1/2 z-20 
+               w-12 h-12 flex items-center justify-center
+               rounded-full border border-[#C5A16F]/30
+               text-[#C5A16F] text-xl
+               bg-[#0B1118]/40 backdrop-blur-md
+               opacity-0 group-hover:opacity-100
+               transition-all duration-300
+               hover:bg-[#C5A16F] hover:text-[#0B1118]
+               hover:scale-110">
+                        →
+                    </button>
+
+                    <!-- SCROLL CONTAINER -->
+                    <div id="past-events"
+                        class="flex gap-8 overflow-x-auto scroll-smooth no-scrollbar px-2 snap-x snap-mandatory">
+                    </div>
+
+                </div>
     </section>
 
     <!-- Board Members Section -->
@@ -1363,6 +1525,85 @@
             card.style.setProperty("--y", y + "%");
         });
     });
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") changeEvent(1);
+        if (e.key === "ArrowLeft") changeEvent(-1);
+    });
+    // for mobile support swwipe 
+    let startX = 0;
+
+    const wrapper = document.getElementById("event-wrapper");
+
+    wrapper.addEventListener("touchstart", (e) => {
+        startX = e.touches[0].clientX;
+    });
+
+    wrapper.addEventListener("touchend", (e) => {
+        let endX = e.changedTouches[0].clientX;
+
+        if (endX - startX > 50) changeEvent(-1); // swipe right
+        if (startX - endX > 50) changeEvent(1);  // swipe left
+    });
+    wrapper.addEventListener("mousemove", (e) => {
+        const rect = wrapper.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        wrapper.style.setProperty("--x", x + "%");
+        wrapper.style.setProperty("--y", y + "%");
+    });
+
+    //scroll for pastevents
+    let pastIndex = 0;
+
+    function scrollPast(direction) {
+        const container = document.getElementById("past-events");
+        const cards = container.children;
+
+        if (!cards.length) return;
+
+        pastIndex += direction;
+
+        if (pastIndex < 0) pastIndex = 0;
+        if (pastIndex >= cards.length) pastIndex = cards.length - 1;
+
+        const card = cards[pastIndex];
+
+        container.scrollTo({
+            left: card.offsetLeft - container.offsetWidth / 2 + card.offsetWidth / 2,
+            behavior: "smooth"
+        });
+        updateActiveCard();
+    }
+    function updateActiveCard() {
+    const container = document.getElementById("past-events");
+    const cards = container.children;
+
+    Array.from(cards).forEach((card, i) => {
+        card.classList.toggle("active", i === pastIndex);
+    });
+}
+    //swipe
+    let pastStartX = 0;
+    let pastEndX = 0;
+
+    const pastWrapper = document.getElementById("past-wrapper");
+
+    pastWrapper.addEventListener("touchstart", (e) => {
+        pastStartX = e.touches[0].clientX;
+    });
+
+    pastWrapper.addEventListener("touchmove", (e) => {
+        pastEndX = e.touches[0].clientX;
+    });
+
+    pastWrapper.addEventListener("touchend", () => {
+        let diff = pastStartX - pastEndX;
+
+        if (diff > 50) scrollPast(1);   // swipe left
+        if (diff < -50) scrollPast(-1); // swipe right
+    });
+
     window.addEventListener("load", () => {
         loadDivisions();
     });
