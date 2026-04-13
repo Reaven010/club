@@ -340,6 +340,32 @@
             /* Set base visibility to 1 */
         }
 
+        .event-card {
+            transform: perspective(1000px) rotateX(0) rotateY(0);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .event-card:hover {
+            transform: perspective(1000px) rotateX(5deg) rotateY(-5deg) scale(1.03);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6),
+                0 0 20px rgba(197, 161, 111, 0.2);
+        }
+
+        /* glow overlay */
+        .event-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%),
+                    rgba(197, 161, 111, 0.15), transparent 60%);
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        .event-card:hover::before {
+            opacity: 1;
+        }
+
         /* Fix for the "Distinctions" panel looking faded */
         .achievement-reveal,
         .event-reveal {
@@ -375,11 +401,68 @@
             pointer-events: none;
             opacity: 0.3;
         }
+
+        /* upcomming event animation */
+        .upcoming-event-reveal {
+            transition: transform 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        .upcoming-event-reveal:hover {
+            transform: scale(1.02);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8),
+                0 0 40px rgba(197, 161, 111, 0.2);
+        }
+
+        /* image cinematic zoom */
+        .upcoming-event-reveal img {
+            transition: transform 1.2s ease;
+        }
+
+        .upcoming-event-reveal:hover img {
+            transform: scale(1.08);
+        }
+
+        /* text glow */
+        .upcoming-event-reveal h4 {
+            transition: 0.3s;
+        }
+
+        .upcoming-event-reveal:hover h4 {
+            color: #C5A16F;
+            text-shadow: 0 0 10px rgba(197, 161, 111, 0.5);
+        }
+
+        /* for logo  */
+        .btn-eureka {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-eureka::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(197, 161, 111, 0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-eureka:hover::after {
+            left: 100%;
+        }
     </style>
 </head>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+    const roleOrder = {
+        "President": 1,
+        "Vice President": 2,
+        "General Secretary": 3,
+        "Joint Secretary": 4
+    };
     if (!window.supabaseClient) {
         window.supabaseClient = window.supabase.createClient(
             "https://eegcyreyyeuihnspasbh.supabase.co",
@@ -415,23 +498,175 @@
             container.innerHTML += card;
         });
     }
+
+    //upcomming event
+
+    function renderUpcomingEvent(events) {
+        const container = document.getElementById("upcoming-event");
+
+        if (!events || events.length === 0) {
+            container.innerHTML = `
+  <div class="flex flex-col lg:flex-row items-center justify-center text-center min-h-[300px] p-10">
+
+    <div class="lg:w-1/2 flex flex-col items-center justify-center">
+
+      <div class="mb-6 text-[#C5A16F] font-mono text-[10px] tracking-[0.3em] animate-pulse">
+        // NO_ACTIVE_TRANSMISSIONS
+      </div>
+
+      <h4 class="text-2xl font-sync mb-4 gold-gradient-text">
+        No Upcoming Events
+      </h4>
+
+      <p class="text-gray-500 text-sm max-w-md leading-relaxed">
+        The system is currently idle. New missions will be deployed soon. 
+        Stay connected to receive the next transmission.
+      </p>
+
+      <div class="mt-6 border border-[#C5A16F]/30 px-6 py-2 text-[10px] font-mono tracking-widest opacity-60">
+        STATUS: STANDBY
+      </div>
+
+    </div>
+
+  </div>
+`;
+            return;
+        }
+
+        const event = events[0]; // nearest future event
+
+        container.innerHTML = `
+    <div class="flex flex-col lg:flex-row">
+
+      <div class="lg:w-1/2 overflow-hidden aspect-video lg:aspect-square relative">
+        <img src="${event.image}" 
+             class="w-full h-full object-cover">
+        <div class="absolute top-6 left-6 bg-[#C5A16F] text-navy px-4 py-1 text-[10px]">
+          LIVE_UPCOMING
+        </div>
+      </div>
+
+      <div class="lg:w-1/2 p-10 flex flex-col justify-center">
+        <span class="font-mono text-[#C5A16F] text-xs mb-2">
+          ${event.date}
+        </span>
+
+        <h4 class="text-3xl font-sync mb-6">
+          ${event.title}
+        </h4>
+
+        <p class="text-gray-400 mb-8">
+          ${event.description}
+        </p>
+
+        <button class="btn-eureka">Register Node</button>
+      </div>
+
+    </div>
+  `;
+    }
+
+    //load past event
+
+    function renderPastEvents(events) {
+        const container = document.getElementById("past-events");
+
+        if (!events || events.length === 0) {
+            container.innerHTML = `<p class="text-gray-500">No past events</p>`;
+            return;
+        }
+
+        container.innerHTML = "";
+
+        events.forEach(event => {
+            container.innerHTML += `
+      <div class="event-card glass-panel group">
+        <div class="relative overflow-hidden aspect-video">
+          <img src="${event.image}" 
+               class="w-full h-full object-cover grayscale group-hover:grayscale-0">
+        </div>
+        <div class="p-6">
+          <span class="font-mono text-[9px] text-[#A3C4D9]">
+            COMPLETED // ${event.date}
+          </span>
+          <h5 class="font-sync text-sm mt-2">
+            ${event.title}
+          </h5>
+        </div>
+      </div>
+    `;
+        });
+    }
+
+    //load event
+
     async function loadEvents() {
         const { data, error } = await supabase
             .from("events")
+            .select("*");
+
+        if (error) {
+            console.error(error);
+            return;
+        }
+
+        const today = new Date();
+
+        // split events
+        const upcomingEvents = data
+            .filter(e => new Date(e.date) >= today)
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        const pastEvents = data
+            .filter(e => new Date(e.date) < today)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        renderUpcomingEvent(upcomingEvents);
+        renderPastEvents(pastEvents);
+    }
+    async function loadBoardMembers() {
+        const { data, error } = await supabase
+            .from("members")
             .select("*")
-            .order("date", { ascending: false });
+            .eq("team_id", "board");
 
-        if (!error) {
-            displayEvents(data);
-        }
-        else {
-            console.erroe(error);
+        if (error) {
+            console.error(error);
+            return;
         }
 
-        console.log(data); // check data
+        const container = document.getElementById("board-container");
+        container.innerHTML = "";
+
+        data.forEach(member => {
+            const card = `
+        <div class="member-card text-center board-reveal">
+            <div class="member-frame mb-6">
+                <img src="${member.image}" alt="Member" class="member-img">
+            </div>
+            <h3 class="font-sync text-sm gold-gradient-text mb-1">${member.name}</h3>
+            <span class="text-[10px] uppercase tracking-widest text-[#A3C4D9]">${member.role}</span>
+        </div>
+        `;
+
+            container.innerHTML += card;
+        });
+
+        // 🔥 Re-run SAME animation (no change)
+        gsap.from(".board-reveal", {
+            y: 100,
+            opacity: 0,
+            duration: 1.2,
+            stagger: 0.2,
+            ease: "back.out(1.7)"
+        });
     }
 
     loadEvents();
+    window.addEventListener("load", () => {
+        loadBoardMembers();
+    });
 </script>
 
 <body>
@@ -528,38 +763,13 @@
             <div class="mb-20">
                 <h3 class="font-sync text-xs text-[#A3C4D9] mb-8 tracking-[0.4em]">// INCOMING_TRANSMISSION</h3>
                 <div class="glass-panel p-1 rounded-none group relative overflow-hidden upcoming-event-reveal">
-                    <div class="flex flex-col lg:flex-row">
-                        <!-- Event Poster -->
-                        <div class="lg:w-1/2 overflow-hidden aspect-video lg:aspect-square relative">
-                            <div class="absolute inset-0 bg-gradient-to-t from-navy to-transparent z-10 opacity-60">
-                            </div>
-                            <img src="./greatness.jpeg" alt="Upcoming Event"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000">
-                            <div
-                                class="absolute top-6 left-6 z-20 bg-[#C5A16F] text-navy px-4 py-1 font-sync text-[10px] animate-pulse">
-                                LIVE_UPCOMING</div>
-                        </div>
-                        <!-- Event Details -->
-                        <div class="lg:w-1/2 p-10 flex flex-col justify-center">
-                            <!-- OCT 24 - 26, 2024 -->
-                            <span class="font-mono text-[#C5A16F] text-xs mb-2">Not Fixed</span>
-                            <h4 class="text-3xl font-sync mb-6">site deployment</h4>
-                            <p class="text-gray-400 font-light leading-relaxed mb-8">
-                                this site being deployed
-                            </p>
-                            <div class="flex gap-4">
-                                <button class="btn-eureka">Register Node</button>
-                                <button
-                                    class="border border-white/10 px-6 py-2 text-[10px] uppercase font-sync hover:bg-white/5 transition">Details</button>
-                            </div>
-                        </div>
-                    </div>
+                    <div id="upcoming-event"></div>
                 </div>
             </div>
 
             <!-- Previous Events: Horizontal Scroll/Grid -->
             <h3 class="font-sync text-xs text-gray-500 mb-8 tracking-[0.4em]">// MISSION_ARCHIVE</h3>
-            <div id="events-container" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
+            <div id="past-events" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
         </div>
     </section>
 
@@ -569,45 +779,7 @@
             <span class="section-title">The Architects</span>
             <h2 class="text-4xl font-sync">The Board <span class="gold-gradient-text">Members</span></h2>
         </div>
-
-        <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
-
-            <!-- Member 1 -->
-            <div class="member-card text-center board-reveal">
-                <div class="member-frame mb-6">
-                    <img src="./board-members/shelly-sharma.png" alt="Member" class="member-img">
-                </div>
-                <h3 class="font-sync text-sm gold-gradient-text mb-1">Shelly Sharma</h3>
-                <span class="text-[10px] uppercase tracking-widest text-[#A3C4D9]">President</span>
-            </div>
-
-            <!-- Member 2 -->
-            <div class="member-card text-center board-reveal">
-                <div class="member-frame mb-6">
-                    <img src="./board-members/naman-joshi.png" alt="Member" class="member-img">
-                </div>
-                <h3 class="font-sync text-sm gold-gradient-text mb-1">Naman Joshi</h3>
-                <span class="text-[10px] uppercase tracking-widest text-[#A3C4D9]">General Secretary</span>
-            </div>
-
-            <!-- Member 3 -->
-            <div class="member-card text-center board-reveal">
-                <div class="member-frame mb-6">
-                    <img src="./board-members/vaidehi-gupta.png" alt="Member" class="member-img">
-                </div>
-                <h3 class="font-sync text-sm gold-gradient-text mb-1">Vaidehi Gupta</h3>
-                <span class="text-[10px] uppercase tracking-widest text-[#A3C4D9]">Vice President</span>
-            </div>
-
-            <!-- Member 4 -->
-            <div class="member-card text-center board-reveal">
-                <div class="member-frame mb-6">
-                    <img src="./board-members/sneha-singh.png" alt="Member" class="member-img">
-                </div>
-                <h3 class="font-sync text-sm gold-gradient-text mb-1">Sneha Singh</h3>
-                <span class="text-[10px] uppercase tracking-widest text-[#A3C4D9]">Joint Secretary</span>
-            </div>
-
+        <div id="board-container" class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
         </div>
     </section>
 
@@ -620,235 +792,7 @@
                 <p class="text-[10px] text-gray-500 mt-4 tracking-[0.3em]">SELECT A DIVISION TO ACCESS CORE DATA</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 division-grid">
-
-                <!-- Division 1: content team -->
-                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('content')">
-                    <div class="hud-corner-tl"></div>
-                    <div class="hud-corner-br"></div>
-
-                    <h3
-                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
-                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_01</span>
-                        Content Department
-                    </h3>
-
-                    <div class="space-y-4 border-l border-gray-800 pl-6">
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
-                            <p class="font-sync text-sm gold-gradient-text">Anushka Upadhyay</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
-                            <p class="font-sync text-sm text-[#A3C4D9]">Medha Kaushik</p>
-                        </div>
-                    </div>
-
-                    <div
-                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
-                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
-                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
-                    </div>
-                </div>
-
-                <!-- Division 2: design team -->
-                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('design')">
-                    <div class="hud-corner-tl"></div>
-                    <div class="hud-corner-br"></div>
-
-                    <h3
-                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
-                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_02</span>
-                        Design Department
-                    </h3>
-
-                    <div class="space-y-4 border-l border-gray-800 pl-6">
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
-                            <p class="font-sync text-sm gold-gradient-text">Sophia Verghese</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
-                            <p class="font-sync text-sm text-[#A3C4D9]">info filling later</p>
-                        </div>
-                    </div>
-
-                    <div
-                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
-                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
-                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
-                    </div>
-                </div>
-
-                <!-- Division 3: Tech team -->
-                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('tech')">
-                    <div class="hud-corner-tl"></div>
-                    <div class="hud-corner-br"></div>
-
-                    <h3
-                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
-                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_03</span>
-                        Technical Department
-                    </h3>
-
-                    <div class="space-y-4 border-l border-gray-800 pl-6">
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
-                            <p class="font-sync text-sm gold-gradient-text">Swanik Srivastava</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
-                            <p class="font-sync text-sm text-[#A3C4D9]">Poorvansh jain</p>
-                        </div>
-                    </div>
-
-                    <div
-                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
-                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
-                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
-                    </div>
-                </div>
-                <!-- Division 4: research  and development -->
-                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('randd')">
-                    <div class="hud-corner-tl"></div>
-                    <div class="hud-corner-br"></div>
-
-                    <h3
-                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
-                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_04</span>
-                        Research Department
-                    </h3>
-
-                    <div class="space-y-4 border-l border-gray-800 pl-6">
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
-                            <p class="font-sync text-sm gold-gradient-text">Divyansh Agawwal</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
-                            <p class="font-sync text-sm text-[#A3C4D9]">Aditya Jhawar</p>
-                        </div>
-                    </div>
-
-                    <div
-                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
-                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
-                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
-                    </div>
-                </div>
-                <!-- Division 5: corporate -->
-                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('corporate')">
-                    <div class="hud-corner-tl"></div>
-                    <div class="hud-corner-br"></div>
-
-                    <h3
-                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
-                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_05</span>
-                        Corporate Department
-                    </h3>
-
-                    <div class="space-y-4 border-l border-gray-800 pl-6">
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
-                            <p class="font-sync text-sm gold-gradient-text">Parth Gaur</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
-                            <p class="font-sync text-sm text-[#A3C4D9]">Akhillesh Raj A</p>
-                        </div>
-                    </div>
-
-                    <div
-                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
-                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
-                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
-                    </div>
-                </div>
-                <!-- Division 6: stage team -->
-                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('stage')">
-                    <div class="hud-corner-tl"></div>
-                    <div class="hud-corner-br"></div>
-
-                    <h3
-                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
-                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_06</span>
-                        Stage Department
-                    </h3>
-
-                    <div class="space-y-4 border-l border-gray-800 pl-6">
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
-                            <p class="font-sync text-sm gold-gradient-text">Vrinda Jain</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
-                            <p class="font-sync text-sm text-[#A3C4D9]">Purva Kataria</p>
-                        </div>
-                    </div>
-
-                    <div
-                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
-                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
-                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
-                    </div>
-                </div>
-                <!-- Division 7: media team -->
-                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('media')">
-                    <div class="hud-corner-tl"></div>
-                    <div class="hud-corner-br"></div>
-
-                    <h3
-                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
-                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_07</span>
-                        Media Department
-                    </h3>
-
-                    <div class="space-y-4 border-l border-gray-800 pl-6">
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
-                            <p class="font-sync text-sm gold-gradient-text">Shivam Ghalme</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
-                            <p class="font-sync text-sm text-[#A3C4D9]">fill soon</p>
-                        </div>
-                    </div>
-
-                    <div
-                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
-                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
-                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
-                    </div>
-                </div>
-                <!-- Division 8: event team -->
-                <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('event')">
-                    <div class="hud-corner-tl"></div>
-                    <div class="hud-corner-br"></div>
-
-                    <h3
-                        class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
-                        <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">NODE_08</span>
-                        event Department
-                    </h3>
-
-                    <div class="space-y-4 border-l border-gray-800 pl-6">
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
-                            <p class="font-sync text-sm gold-gradient-text">Rudraksh Mishra</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
-                            <p class="font-sync text-sm text-[#A3C4D9]">Aryan Mishra</p>
-                        </div>
-                    </div>
-
-                    <div
-                        class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
-                        <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
-                        <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
-                    </div>
-                </div>
-
+            <div id="division-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 division-grid">
             </div>
         </div>
     </section>
@@ -1282,29 +1226,146 @@
 
     // --- 3. Mock Login Logic ---
 
-document.getElementById("terminal-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
+    document.getElementById("terminal-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-    const email = e.target[0].value;
-    const password = e.target[1].value;
+        const email = e.target[0].value;
+        const password = e.target[1].value;
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+        });
+
+        if (error) {
+            alert("ACCESS DENIED");
+        } else {
+            window.location.href = "dashboard.html";
+        }
     });
-
-    if (error) {
-        alert("ACCESS DENIED");
-    } else {
-        window.location.href = "dashboard.html";
-    }
-});
 
     // Close terminal if user clicks the background
     terminal.addEventListener('click', (e) => {
         if (e.target === terminal) closeTerminal();
     });
 
+    //load board members
+
+    async function loadBoardMembers() {
+        const { data, error } = await supabase
+            .from("members")
+            .select("*")
+            .eq("team_id", "board");
+
+        if (error) {
+            console.error(error);
+            return;
+        }
+
+        // ✅ SORT HERE (IMPORTANT)
+        data.sort((a, b) => {
+            return (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99);
+        });
+
+        const container = document.getElementById("board-container");
+        container.innerHTML = "";
+
+        data.forEach(member => {
+            container.innerHTML += `
+        <div class="member-card text-center board-reveal">
+            <div class="member-frame mb-6">
+                <img src="${member.image}" class="member-img">
+            </div>
+            <h3 class="font-sync text-sm gold-gradient-text mb-1">${member.name}</h3>
+            <span class="text-[10px] uppercase tracking-widest text-[#A3C4D9]">${member.role}</span>
+        </div>
+        `;
+        });
+
+        // animation stays same
+        gsap.from(".board-reveal", {
+            y: 100,
+            opacity: 0,
+            duration: 1.2,
+            stagger: 0.2,
+            ease: "back.out(1.7)"
+        });
+    }
+    //loading working tree
+
+    async function loadDivisions() {
+
+        const { data: teams } = await supabase
+            .from("teams")
+            .select("*")
+            .neq("team_id", "board");
+
+        const { data: members } = await supabase
+            .from("members")
+            .select("*")
+            .neq("team_id", "board");
+
+        const container = document.getElementById("division-container");
+        container.innerHTML = "";
+
+        teams.forEach((team, index) => {
+
+            const lead = members.find(m => m.team_id === team.team_id && m.role === "Team Lead");
+            const coLead = members.find(m => m.team_id === team.team_id && m.role === "Co-Lead");
+
+            container.innerHTML += `
+        <div class="division-card glass-panel p-10 group" onclick="navigateToTeam('${team.team_id}')">
+
+            <div class="hud-corner-tl"></div>
+            <div class="hud-corner-br"></div>
+
+            <h3 class="font-sync text-xl mb-8 group-hover:text-[#C5A16F] transition-all cursor-pointer tracking-tighter">
+                <span class="text-[10px] text-[#A3C4D9] block mb-2 font-mono">
+                    NODE_0${index + 1}
+                </span>
+                ${team.title}
+            </h3>
+
+            <div class="space-y-4 border-l border-gray-800 pl-6">
+                <div>
+                    <p class="text-[9px] uppercase tracking-widest text-gray-500">Division Lead</p>
+                    <p class="font-sync text-sm gold-gradient-text">${lead ? lead.name : "N/A"}</p>
+                </div>
+                <div>
+                    <p class="text-[9px] uppercase tracking-widest text-gray-500">Co-Lead</p>
+                    <p class="font-sync text-sm text-[#A3C4D9]">${coLead ? coLead.name : "N/A"}</p>
+                </div>
+            </div>
+
+            <div class="mt-8 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
+                <span class="text-[9px] font-mono">STATUS: PROCESSING</span>
+                <span class="text-[#C5A16F] text-xs">VIEW FULL CREW →</span>
+            </div>
+
+        </div>
+        `;
+        });
+    }
+    gsap.from("#upcoming-event", {
+        opacity: 0,
+        y: 50,
+        duration: 1,
+        ease: "expo.out"
+    });
+    //event card animation
+    document.querySelectorAll(".event-card").forEach(card => {
+        card.addEventListener("mousemove", (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+            card.style.setProperty("--x", x + "%");
+            card.style.setProperty("--y", y + "%");
+        });
+    });
+    window.addEventListener("load", () => {
+        loadDivisions();
+    });
 
 </script>
 

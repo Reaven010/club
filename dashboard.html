@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EUREKA | Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=JetBrains+Mono&display=swap"
         rel="stylesheet">
@@ -86,6 +87,27 @@
         .clip-hex {
             clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
         }
+
+        /* for terminal */
+        #log-container::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(197, 161, 111, 0.3);
+            animation: scanline 4s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% {
+                top: 0%;
+            }
+
+            100% {
+                top: 100%;
+            }
+        }
     </style>
 </head>
 
@@ -124,25 +146,41 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                 <div class="glass-panel p-6">
                     <p class="text-[9px] text-gray-500">TOTAL_NODES</p>
-                    <h3 class="text-3xl font-sync mt-2 counter" data-target="152">0</h3>
+                    <h3 id="total-members" class="text-3xl font-sync mt-2 ">0</h3>
                 </div>
                 <div class="glass-panel p-6">
                     <p class="text-[9px] text-gray-500">UPCOMING_EVENTS</p>
-                    <h3 class="text-3xl font-sync mt-2 counter" data-target="4">0</h3>
+                    <h3 id="upcoming-events" class="text-3xl font-sync mt-2 ">0</h3>
                 </div>
                 <div class="glass-panel p-6">
                     <p class="text-[9px] text-gray-500">SYSTEM_UPTIME</p>
                     <h3 class="text-3xl font-sync mt-2">99.8%</h3>
                 </div>
+                <div class="glass-panel p-6 mt-6">
+                    <h4 class="text-[10px] text-[#A3C4D9]">// SYSTEM_INSIGHT</h4>
+                    <p id="insight-box" class="text-sm mt-3 text-gray-300"></p>
+                </div>
             </div>
 
             <div class="glass-panel p-8">
                 <h4 class="text-[10px] font-sync mb-4">// RECENT_LOGS</h4>
-                <div id="log-container" class="space-y-3 opacity-60 text-[11px]">
-                    <p>> [14:22] ADMIN connected from NODE_INTERNAL</p>
-                    <p>> [12:05] Event 'ROBO-STRATOS' entry updated</p>
-                    <p>> [09:15] New achievement recorded: 'IEEE Publication'</p>
+                <div id="log-container" class="space-y-3 opacity-60 text-[11px]"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+
+                <!-- Members per Team -->
+                <div class="glass-panel p-6">
+                    <h4 class="text-[10px] mb-4 text-[#A3C4D9]">// TEAM_DISTRIBUTION</h4>
+                    <canvas id="teamChart"></canvas>
                 </div>
+
+                <!-- Events Timeline -->
+                <div class="glass-panel p-6">
+                    <h4 class="text-[10px] mb-4 text-[#A3C4D9]">// EVENT_ACTIVITY</h4>
+                    <canvas id="eventChart"></canvas>
+                </div>
+
             </div>
         </section>
 
@@ -358,6 +396,64 @@
 
             console.log("USER LOGGED IN");
         })();
+
+        //added realtime 
+
+        function enableRealtime() {
+            supabase
+                .channel('dashboard-updates')
+
+                // 🔵 MEMBERS
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'members'
+                }, payload => {
+
+                    console.log("Members changed:", payload);
+
+                    if (payload.eventType === "INSERT") {
+                        addLog(`🟢 New member added: ${payload.new.name}`);
+                    }
+
+                    if (payload.eventType === "DELETE") {
+                        addLog(`🔴 Member removed`);
+                    }
+
+                    if (payload.eventType === "UPDATE") {
+                        addLog(`🟡 Member updated: ${payload.new.name}`);
+                    }
+
+                    loadOverview();
+                })
+
+                // 🟣 EVENTS
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'events'
+                }, payload => {
+
+                    console.log("Events changed:", payload);
+
+                    if (payload.eventType === "INSERT") {
+                        addLog(`🟢 New event: ${payload.new.title}`);
+                    }
+
+                    if (payload.eventType === "DELETE") {
+                        addLog(`🔴 Event deleted`);
+                    }
+
+                    if (payload.eventType === "UPDATE") {
+                        addLog(`🟡 Event updated: ${payload.new.title}`);
+                    }
+
+                    loadOverview();
+                })
+
+                .subscribe();
+        }
+
         // --- 2. Global State ---
         let editingId = null;
         let currentImage = "";
@@ -567,18 +663,7 @@
         }
 
         // --- 5. Lifecycle ---
-        window.onload = () => {
-            gsap.to("body", { opacity: 1, duration: 1, ease: "power.out" });
-            loadAdminEvents(); // Load events immediately
 
-            // Counter Animation logic
-            document.querySelectorAll('.counter').forEach(c => {
-                const target = +c.dataset.target;
-                gsap.to(c, { innerText: target, duration: 2, snap: { innerText: 1 }, ease: "power2.out" });
-            });
-            loadMembers();
-            loadBroadcasts();
-        };
 
         function showTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
@@ -587,17 +672,60 @@
             event.currentTarget.classList.add('active');
             gsap.from('#tab-' + id, { y: 10, opacity: 0, duration: 0.4 });
         }
-        function addLog(msg) {
+        //console log 
+
+        function typeEffect(el, text) {
+            let i = 0;
+            const interval = setInterval(() => {
+                el.innerHTML += text[i];
+                i++;
+                if (i >= text.length) clearInterval(interval);
+            }, 10);
+        }
+        function typeEffect(el, text, speed = 10) {
+            let i = 0;
+            const interval = setInterval(() => {
+                el.innerHTML += text[i];
+                i++;
+                if (i >= text.length) clearInterval(interval);
+            }, speed);
+        }
+
+        function addLog(message) {
             const logContainer = document.getElementById('log-container');
+            if (!logContainer) return;
+
             const now = new Date();
             const time = `[${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}]`;
 
             const log = document.createElement('p');
-            log.innerHTML = `> ${time} ${msg.toUpperCase()}`;
             log.style.opacity = "0";
-            logContainer.prepend(log); // Adds new log to top
 
-            gsap.to(log, { opacity: 1, duration: 0.5 });
+            // 🎨 color logic
+            let color = "#A3C4D9";
+            if (message.includes("🟢")) color = "#22c55e";
+            if (message.includes("🔴")) color = "#ef4444";
+            if (message.includes("🟡")) color = "#facc15";
+
+            // 🔥 structure
+            log.innerHTML = `<span style="color:#888">${time}</span> `;
+
+            logContainer.prepend(log);
+
+            // 🔥 type animation (only message part)
+            const span = document.createElement('span');
+            span.style.color = color;
+            log.appendChild(span);
+
+            typeEffect(span, message);
+
+            // limit logs
+            if (logContainer.children.length > 12) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+
+            // fade in
+            gsap.to(log, { opacity: 1, duration: 0.4 });
         }
         fileInput.addEventListener("change", () => {
             const file = fileInput.files[0];
@@ -662,25 +790,7 @@
             event.currentTarget.classList.add('active');
             gsap.from('#tab-' + id, { y: 10, opacity: 0, duration: 0.4 });
         }
-        function addLog(msg) {
-            const logContainer = document.getElementById('log-container');
 
-            // SAFETY CHECK: If logContainer doesn't exist, stop the function
-            if (!logContainer) {
-                console.warn("Log container not found in DOM.");
-                return;
-            }
-
-            const now = new Date();
-            const time = `[${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}]`;
-
-            const log = document.createElement('p');
-            log.innerHTML = `> ${time} ${msg.toUpperCase()}`;
-            log.style.opacity = "0";
-            logContainer.prepend(log);
-
-            gsap.to(log, { opacity: 1, duration: 0.5 });
-        }
 
         // ================= MEMBER SYSTEM =================
 
@@ -909,6 +1019,144 @@
             await supabase.auth.signOut();
             window.location.href = "index.html";
         }
+        // load overview
+        async function loadOverview() {
+            const { data: members } = await supabase.from("members").select("*");
+            const { data: events } = await supabase.from("events").select("*");
+
+            const membersCount = members?.length || 0;
+
+            const today = new Date().toISOString().split("T")[0];
+            const upcoming = events?.filter(e => e.date >= today) || [];
+
+            const mEl = document.getElementById("total-members");
+            const eEl = document.getElementById("upcoming-events");
+
+            if (mEl) animateCounter(mEl, membersCount);
+            if (eEl) animateCounter(eEl, upcoming.length);
+
+            // 🔥 NEW PART
+            const teamData = processTeamData(members);
+            renderTeamChart(teamData);
+
+            const eventData = processEventData(events);
+            renderEventChart(eventData);
+
+            generateInsight(teamData);
+            updateTimestamp();
+        }
+
+        function animateCounter(el, value) {
+            gsap.to(el, {
+                innerText: value,
+                duration: 0.8,
+                snap: { innerText: 1 },
+                ease: "power2.out"
+            });
+        }
+
+        //chart
+        function processTeamData(members) {
+            const teamCount = {};
+
+            members.forEach(m => {
+                const team = m.team_id || "unknown";
+                teamCount[team] = (teamCount[team] || 0) + 1;
+            });
+
+            return teamCount;
+        }
+        let teamChart;
+
+        function renderTeamChart(data) {
+            const ctx = document.getElementById('teamChart');
+
+            if (teamChart) teamChart.destroy();
+
+            teamChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        label: 'Members',
+                        data: Object.values(data),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+        function processEventData(events) {
+            const map = {};
+
+            events.forEach(e => {
+                const date = e.date;
+                map[date] = (map[date] || 0) + 1;
+            });
+
+            return map;
+        }
+        let eventChart;
+
+        function renderEventChart(data) {
+            const ctx = document.getElementById('eventChart');
+
+            if (eventChart) eventChart.destroy();
+
+            eventChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        label: 'Events',
+                        data: Object.values(data),
+                        tension: 0.3
+                    }]
+                }
+            });
+        }
+
+        //insight
+        function generateInsight(teamData) {
+            let maxTeam = "";
+            let max = 0;
+
+            for (let team in teamData) {
+                if (teamData[team] > max) {
+                    max = teamData[team];
+                    maxTeam = team;
+                }
+            }
+
+            document.getElementById("insight-box").innerText =
+                `Most active team: ${maxTeam} (${max} members)`;
+        }
+        function updateTimestamp() {
+            const el = document.getElementById("last-updated");
+            if (!el) return;
+
+            el.innerText = "// LAST_SYNC: " + new Date().toLocaleTimeString();
+        }
+        window.addEventListener("DOMContentLoaded", () => {
+            gsap.to("body", { opacity: 1, duration: 1, ease: "power.out" });
+            loadAdminEvents(); // Load events immediately
+
+            // Counter Animation logic
+            document.querySelectorAll('.counter').forEach(c => {
+                const target = +c.dataset.target;
+                gsap.to(c, { innerText: target, duration: 2, snap: { innerText: 1 }, ease: "power2.out" });
+            });
+
+            loadMembers();
+            loadBroadcasts();
+            loadOverview();
+            enableRealtime();
+            addLog("System initialized");
+        });
     </script>
     <div id="toast"
         class="fixed bottom-5 right-5 px-4 py-2 text-xs font-sync bg-[#C5A16F] text-black rounded shadow-lg opacity-0 transition-all duration-300 pointer-events-none">
