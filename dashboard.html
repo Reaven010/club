@@ -5,6 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EUREKA | Command Center</title>
+    <script>
+        // Immediate early-check for Lite Mode to prevent flash of heavy animations
+        const isEarlyLite = localStorage.getItem('lite-mode') === 'true';
+        if (isEarlyLite) {
+            document.documentElement.classList.add('lite-mode');
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -16,6 +23,30 @@
             --navy: #0B1118;
             --gold: #C5A16F;
             --blue: #A3C4D9;
+        }
+
+        /* Lite Mode Override Rules */
+        .lite-mode *, 
+        .lite-mode *::before, 
+        .lite-mode *::after {
+            animation-delay: 0s !important;
+            animation-duration: 0s !important;
+            animation-iteration-count: 1 !important;
+            transition-delay: 0s !important;
+            transition-duration: 0s !important;
+            scroll-behavior: auto !important;
+            backdrop-filter: none !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+        }
+
+        .lite-mode main {
+            background-image: none !important; /* Remove floating grid pattern in Lite Mode */
+        }
+
+        .lite-mode #log-container::after {
+            display: none !important;
+            animation: none !important;
         }
 
         body {
@@ -113,6 +144,31 @@
 
 <body class="flex h-screen overflow-hidden">
 
+    <!-- Floating Mode Toggle Widget -->
+    <div id="mode-toggle-widget" class="fixed bottom-6 left-6 z-[9999] flex flex-col items-start font-mono text-[9px] pointer-events-auto">
+        <div class="glass-panel p-3 border-[#C5A16F]/30 bg-[#0B1118]/90 flex flex-col gap-2 relative shadow-2xl">
+            <!-- Brackets -->
+            <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#C5A16F]/60"></div>
+            <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#C5A16F]/60"></div>
+            
+            <div class="text-[#A3C4D9] uppercase tracking-[0.2em] font-sync text-[8px] flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" id="mode-pulse"></span>
+                SYS_VISUALS: <span id="current-mode-label" class="text-white">NORMAL</span>
+            </div>
+            
+            <div class="flex gap-2">
+                <button id="btn-mode-normal" onclick="setSystemMode('normal')" 
+                    class="px-3 py-1.5 border border-[#C5A16F] text-[#C5A16F] transition hover:bg-[#C5A16F]/10 hover:scale-105 active:scale-95">
+                    [ NORMAL_MODE ]
+                </button>
+                <button id="btn-mode-lite" onclick="setSystemMode('lite')" 
+                    class="px-3 py-1.5 border border-white/20 text-gray-500 transition hover:border-[#C5A16F]/50 hover:text-white hover:scale-105 active:scale-95">
+                    [ LITE_MODE ]
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Sidebar Navigation -->
     <aside class="w-64 glass-panel border-y-0 border-l-0 flex flex-col p-6 z-10">
         <div class="mb-12">
@@ -128,8 +184,6 @@
             <div class="sidebar-item p-3 text-[10px] tracking-widest" onclick="showTab('members')">03_PERSONNEL</div>
             <div class="sidebar-item p-3 text-[10px] tracking-widest" onclick="showTab('broadcast')">04_BROADCAST</div>
         </nav>
-
-        <a onclick="logout()" class="text-[8px] text-red-500 hover:text-white transition"> [ TERMINATE_SESSION ] </a>
     </aside>
 
     <!-- Main Workspace -->
@@ -137,6 +191,13 @@
         <!-- Floating HUD BG -->
         <div class="absolute inset-0 opacity-5 pointer-events-none"
             style="background-image: linear-gradient(#C5A16F 1px, transparent 1px), linear-gradient(90deg, #C5A16F 1px, transparent 1px); background-size: 50px 50px;">
+        </div>
+
+        <!-- Top Right Logout Trigger -->
+        <div class="absolute top-6 right-10 z-[100]">
+            <button onclick="logout()" class="border border-red-500/30 hover:border-red-500 bg-[#0B1118]/80 backdrop-blur px-4 py-2 font-mono text-[9px] text-red-500 hover:text-white hover:scale-105 active:scale-95 transition-all">
+                [ TERMINATE_SESSION ]
+            </button>
         </div>
 
         <!-- TAB: OVERVIEW -->
@@ -666,11 +727,14 @@
 
 
         function showTab(id) {
+            const isLiteMode = localStorage.getItem('lite-mode') === 'true';
             document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
             document.getElementById('tab-' + id).classList.remove('hidden');
             document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
             event.currentTarget.classList.add('active');
-            gsap.from('#tab-' + id, { y: 10, opacity: 0, duration: 0.4 });
+            if (!isLiteMode) {
+                gsap.from('#tab-' + id, { y: 10, opacity: 0, duration: 0.4 });
+            }
         }
         //console log 
 
@@ -760,35 +824,48 @@
         // --- 6. Personnel Form Toggle Logic ---
         function toggleMemberForm(show) {
             const wrap = document.getElementById('member-form-wrap');
+            const isLiteMode = localStorage.getItem('lite-mode') === 'true';
 
             if (show) {
                 wrap.classList.remove('hidden');
-                // Cinematic reveal from top
-                gsap.fromTo(wrap,
-                    { height: 0, opacity: 0 },
-                    { height: "auto", opacity: 1, duration: 0.8, ease: "expo.out" }
-                );
+                if (isLiteMode) {
+                    wrap.style.height = "auto";
+                    wrap.style.opacity = "1";
+                } else {
+                    // Cinematic reveal from top
+                    gsap.fromTo(wrap,
+                        { height: 0, opacity: 0 },
+                        { height: "auto", opacity: 1, duration: 0.8, ease: "expo.out" }
+                    );
+                }
                 addLog("Initiating Personnel Registration Protocol...");
             } else {
-                gsap.to(wrap, {
-                    height: 0,
-                    opacity: 0,
-                    duration: 0.5,
-                    ease: "power2.in",
-                    onComplete: () => wrap.classList.add('hidden')
-                });
+                if (isLiteMode) {
+                    wrap.classList.add('hidden');
+                } else {
+                    gsap.to(wrap, {
+                        height: 0,
+                        opacity: 0,
+                        duration: 0.5,
+                        ease: "power2.in",
+                        onComplete: () => wrap.classList.add('hidden')
+                    });
+                }
                 addLog("Registration Aborted.");
             }
         }
 
         // Optional: Add a listener to close form if user switches tabs
         function showTab(id) {
+            const isLiteMode = localStorage.getItem('lite-mode') === 'true';
             toggleMemberForm(false); // Close form when leaving the personnel tab
             document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
             document.getElementById('tab-' + id).classList.remove('hidden');
             document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
             event.currentTarget.classList.add('active');
-            gsap.from('#tab-' + id, { y: 10, opacity: 0, duration: 0.4 });
+            if (!isLiteMode) {
+                gsap.from('#tab-' + id, { y: 10, opacity: 0, duration: 0.4 });
+            }
         }
 
 
@@ -1047,12 +1124,17 @@
         }
 
         function animateCounter(el, value) {
-            gsap.to(el, {
-                innerText: value,
-                duration: 0.8,
-                snap: { innerText: 1 },
-                ease: "power2.out"
-            });
+            const isLiteMode = localStorage.getItem('lite-mode') === 'true';
+            if (isLiteMode) {
+                el.innerText = value;
+            } else {
+                gsap.to(el, {
+                    innerText: value,
+                    duration: 0.8,
+                    snap: { innerText: 1 },
+                    ease: "power2.out"
+                });
+            }
         }
 
         //chart
@@ -1142,13 +1224,22 @@
             el.innerText = "// LAST_SYNC: " + new Date().toLocaleTimeString();
         }
         window.addEventListener("DOMContentLoaded", () => {
-            gsap.to("body", { opacity: 1, duration: 1, ease: "power.out" });
+            const isLiteMode = localStorage.getItem('lite-mode') === 'true';
+            if (isLiteMode) {
+                document.body.style.opacity = '1';
+            } else {
+                gsap.to("body", { opacity: 1, duration: 1, ease: "power.out" });
+            }
             loadAdminEvents(); // Load events immediately
 
             // Counter Animation logic
             document.querySelectorAll('.counter').forEach(c => {
                 const target = +c.dataset.target;
-                gsap.to(c, { innerText: target, duration: 2, snap: { innerText: 1 }, ease: "power2.out" });
+                if (isLiteMode) {
+                    c.innerText = target;
+                } else {
+                    gsap.to(c, { innerText: target, duration: 2, snap: { innerText: 1 }, ease: "power2.out" });
+                }
             });
 
             loadMembers();
@@ -1156,6 +1247,69 @@
             loadOverview();
             enableRealtime();
             addLog("System initialized");
+        });
+
+        // --- 4. System Mode Selector Widget Integration ---
+        function setSystemMode(mode) {
+            const currentMode = localStorage.getItem('lite-mode') === 'true' ? 'lite' : 'normal';
+            if (currentMode === mode) return;
+            
+            localStorage.setItem('lite-mode', mode === 'lite' ? 'true' : 'false');
+            
+            const label = document.getElementById('current-mode-label');
+            if (label) label.innerText = 'REBOOTING...';
+            
+            document.body.style.opacity = '0.3';
+            document.body.style.filter = 'blur(5px)';
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 400);
+        }
+
+        function initModeToggle() {
+            const isLite = localStorage.getItem('lite-mode') === 'true';
+            
+            const normalBtn = document.getElementById('btn-mode-normal');
+            const liteBtn = document.getElementById('btn-mode-lite');
+            const label = document.getElementById('current-mode-label');
+            const pulse = document.getElementById('mode-pulse');
+            
+            if (isLite) {
+                if (liteBtn) {
+                    liteBtn.style.background = '#C5A16F';
+                    liteBtn.style.color = '#0B1118';
+                    liteBtn.style.borderColor = '#C5A16F';
+                }
+                if (normalBtn) {
+                    normalBtn.style.background = 'transparent';
+                    normalBtn.style.color = '#6b7280';
+                    normalBtn.style.borderColor = 'rgba(255,255,255,0.1)';
+                }
+                if (label) label.innerText = 'LITE';
+                if (pulse) {
+                    pulse.className = 'w-1.5 h-1.5 rounded-full bg-amber-500';
+                }
+            } else {
+                if (normalBtn) {
+                    normalBtn.style.background = '#C5A16F';
+                    normalBtn.style.color = '#0B1118';
+                    normalBtn.style.borderColor = '#C5A16F';
+                }
+                if (liteBtn) {
+                    liteBtn.style.background = 'transparent';
+                    liteBtn.style.color = '#6b7280';
+                    liteBtn.style.borderColor = 'rgba(255,255,255,0.1)';
+                }
+                if (label) label.innerText = 'NORMAL';
+                if (pulse) {
+                    pulse.className = 'w-1.5 h-1.5 rounded-full bg-green-500';
+                }
+            }
+        }
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            initModeToggle();
         });
     </script>
     <div id="toast"

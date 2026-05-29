@@ -62,20 +62,46 @@ A cinematic, high-performance web experience for the **Eureka Technical Club**. 
 2.  **Run Locally:**
     Since this project uses WebGL and external scripts, it is best viewed via a local server (like **Live Server** in VS Code).
 3.  **Add a New Team:**
-    Open `team-details.html` and add a new entry to the `teamsData` JavaScript object. The page will automatically generate the UI for you.
+## 📂 Project Structure
+```text
+├── index.html                  # Main Cinematic Landing Page
+├── team-details.html           # Dynamic Master Template for Divisions
+├── dashboard.html              # Dynamic Admin Operations Control Center
+├── components/                 # React UI Template Modules (shadcn/ui compatible)
+│   └── ui/
+│       ├── image-auto-slider.tsx  # Responsive infinite image slider
+│       ├── splite.tsx             # Interactive 3D Spline scene component
+│       ├── spotlight.tsx          # Aceternity static glow spotlight
+│       ├── spotlight-hover.tsx    # Ibelick cursor dynamic spotlight
+│       └── card.tsx               # Shadcn Card layout primitives
+├── demo.tsx                    # React developer imports & components demo
+├── package.json                # Project NPM dependencies & configuration
+├── .gitignore                  # GitHub ignore definitions for local environments
+└── README.md                   # Technical collective documentation
+```
 
 ---
 
-## 📂 Project Structure
-```text
-├── index.html           # Main Cinematic Landing Page
-├── team-details.html    # Dynamic Master Template for Divisions
-├── assets/              # Logos, Member Images, and Posters
-└── js/                  # (Optional) Externalized JS Logic
-```
+## 🚀 Getting Started
 
-## 📝 Configuration Note
-To ensure the **Splash Cursor** and **Three.js Stars** run smoothly, this project requires a browser with WebGL 2.0 support (Chrome, Firefox, Safari 15+).
+### 1. Run Static Environment
+Since this project is a hybrid static web app with advanced WebGL features, you can run the primary pages (`index.html`, `team-details.html`, `dashboard.html`) immediately using a local development server (such as **Live Server** in VS Code). The past events and team divisions are loaded live from a **Supabase database** instance.
+
+### 2. Run React Template Components
+To compile or work on the newly added React components:
+1. Ensure you have **Node.js** installed.
+2. Initialize and install requirements:
+   ```bash
+   npm install
+   ```
+3. Use the components in your custom React/TypeScript configurations or follow the blueprints inside `demo.tsx`.
+
+---
+
+## 📝 Performance Optimization (Lite Mode vs Normal Mode)
+EUREKA features an HUD-styled floating visual mode toggle (stored in `localStorage` to persist globally). 
+* **NORMAL MODE:** Loads cinematic Three.js WebGL particle universes, custom handwriting SVG drawing preloaders, dynamic hover tiltparallax coordinates, rolling stats counts, and interactive 3D Spline backgrounds.
+* **LITE MODE:** Snappily purges WebGL contexts, destroys Lenis smooth scrolls, converts GSAP stagger timelines to instant CSS layouts, bypasses cursor coordinate triggers, and falls back to manual tracks to preserve system CPU and RAM frames.
 
 ---
 
@@ -84,5 +110,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 **System Status: [ STABLE ]**  
 **Eureka Technical Club // Beyond Boundaries**
-## Creater
-**Name :Sayujya Tiwari** 
+
+## Creator
+**Name: Sayujya Tiwari**

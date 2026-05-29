@@ -5,6 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EUREKA</title>
+    <script>
+        // Immediate early-check for Lite Mode to prevent flash of heavy animations
+        const isEarlyLite = localStorage.getItem('lite-mode') === 'true';
+        if (isEarlyLite) {
+            document.documentElement.classList.add('lite-mode');
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
@@ -13,6 +20,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollToPlugin.min.js"></script>
     <!-- Lenis Smooth Scroll Library -->
     <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+    <!-- Spline 3D Viewer Library -->
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.0/build/spline-viewer.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600&display=swap"
         rel="stylesheet">
@@ -22,6 +31,75 @@
             --gold: #C5A16F;
             --blue: #A3C4D9;
             --cream: #FDF6E3;
+        }
+
+        /* Lite Mode Override Rules */
+        .lite-mode *, 
+        .lite-mode *::before, 
+        .lite-mode *::after {
+            animation-delay: 0s !important;
+            animation-duration: 0s !important;
+            animation-iteration-count: 1 !important;
+            transition-delay: 0s !important;
+            transition-duration: 0s !important;
+            scroll-behavior: auto !important;
+            backdrop-filter: none !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+        }
+
+        .lite-mode #canvas-container {
+            display: none !important;
+        }
+
+        .lite-mode .social-card::after,
+        .lite-mode .division-card::before {
+            display: none !important;
+            animation: none !important;
+        }
+
+        .lite-mode .club-logo:hover,
+        .lite-mode .social-card:hover,
+        .lite-mode .division-card:hover,
+        .lite-mode .event-card:hover,
+        .lite-mode .upcoming-event-reveal:hover {
+            transform: none !important;
+            filter: none !important;
+            box-shadow: none !important;
+        }
+
+        #hello-intro {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background-color: #0B1118;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        @keyframes spotlight {
+          0% {
+            opacity: 0;
+            transform: translate(-72%, -62%) scale(0.5);
+          }
+          100% {
+            opacity: 1;
+            transform: translate(-50%, -40%) scale(1);
+          }
+        }
+        
+        .animate-spotlight {
+          animation: spotlight 2s ease 0.75s 1 forwards;
+        }
+
+
+
+        .lite-mode #hello-intro {
+            display: none !important;
         }
 
         body {
@@ -501,14 +579,73 @@
         }
         /* active card */
         .event-card {
-    transition: transform 0.4s ease, opacity 0.4s ease;
-    opacity: 0.5;
-}
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            opacity: 0.5;
+        }
 
-.event-card.active {
-    transform: scale(1.05);
-    opacity: 1;
-}
+        .event-card.active {
+            transform: scale(1.05);
+            opacity: 1;
+        }
+
+        /* Past Events Infinite Auto-Slider Visual Style */
+        @keyframes scroll-left {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+
+        .infinite-scroll {
+          animation: scroll-left 35s linear infinite;
+        }
+
+        .infinite-scroll:hover {
+          animation-play-state: paused;
+        }
+
+        .scroll-container {
+          mask: linear-gradient(
+            90deg,
+            transparent 0%,
+            black 8%,
+            black 92%,
+            transparent 100%
+          );
+          -webkit-mask: linear-gradient(
+            90deg,
+            transparent 0%,
+            black 8%,
+            black 92%,
+            transparent 100%
+          );
+          overflow: hidden;
+          width: 100%;
+        }
+
+        .lite-mode .scroll-container {
+          overflow-x: auto !important;
+          mask: none !important;
+          -webkit-mask: none !important;
+        }
+
+        .lite-mode .infinite-scroll {
+          animation: none !important;
+        }
+
+        .infinite-scroll .event-card {
+          opacity: 1 !important;
+          flex-shrink: 0;
+          will-change: transform;
+          transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), filter 0.4s ease;
+        }
+
+        .infinite-scroll .event-card:hover {
+          transform: scale(1.03);
+          filter: brightness(1.08);
+        }
     </style>
 </head>
 
@@ -665,8 +802,6 @@
 
         showEvent(direction);
     }
-    //load past event
-
     function renderPastEvents(events) {
         const container = document.getElementById("past-events");
 
@@ -675,26 +810,35 @@
             return;
         }
 
-        container.innerHTML = "";
+        // Duplicate events for an infinite seamless loop.
+        // Ensure there are enough events (at least 12) so the loop works perfectly visually.
+        let duplicatedEvents = [...events, ...events];
+        while (duplicatedEvents.length < 12) {
+            duplicatedEvents = [...duplicatedEvents, ...events];
+        }
 
-        events.forEach(event => {
-            container.innerHTML += `
-      <div class="event-card glass-panel group min-w-[300px] max-w-[300px] snap-center">
-        <div class="relative overflow-hidden aspect-video">
-          <img src="${event.image}" 
-               class="w-full h-full object-cover grayscale group-hover:grayscale-0">
-        </div>
-        <div class="p-6">
-          <span class="font-mono text-[9px] text-[#A3C4D9]">
-            COMPLETED // ${event.date}
-          </span>
-          <h5 class="font-sync text-sm mt-2">
-            ${event.title}
-          </h5>
-        </div>
-      </div>
-    `;
-        });
+        container.innerHTML = `
+          <div class="infinite-scroll flex gap-6 w-max">
+            ${duplicatedEvents.map((event, index) => {
+              const imageSrc = event.image || 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=640';
+              return `
+                <div class="event-card glass-panel group min-w-[300px] max-w-[300px]">
+                  <div class="relative overflow-hidden aspect-video">
+                    <img src="${imageSrc}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" loading="lazy" />
+                  </div>
+                  <div class="p-6">
+                    <span class="font-mono text-[9px] text-[#A3C4D9] block">
+                      COMPLETED // ${event.date}
+                    </span>
+                    <h5 class="font-sync text-sm mt-2 text-white">
+                      ${event.title}
+                    </h5>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
     }
 
     //load event
@@ -768,6 +912,66 @@
 </script>
 
 <body>
+
+    <!-- Apple "Hello" Interactive Intro Preloader -->
+    <div id="hello-intro">
+        <!-- Spotlight Ambient Visual (Aceternity-style) -->
+        <div class="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-40">
+            <!-- Spotlight SVG -->
+            <svg class="animate-spotlight pointer-events-none absolute z-[1] h-[169%] w-[138%] lg:w-[84%] opacity-60 -top-40 left-0 md:left-60 md:-top-20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3787 2842" fill="none">
+                <g filter="url(#filter-spotlight)">
+                    <ellipse cx="1924.71" cy="273.501" rx="1924.71" ry="273.501" transform="matrix(-0.822377 -0.568943 -0.568943 0.822377 3631.88 2291.09)" fill="white" fill-opacity="0.21"></ellipse>
+                </g>
+                <defs>
+                    <filter id="filter-spotlight" x="0.860352" y="0.838989" width="3785.16" height="2840.26" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                        <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+                        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend>
+                        <feGaussianBlur stdDeviation="151" result="effect1_foregroundBlur_1065_8"></feGaussianBlur>
+                    </filter>
+                </defs>
+            </svg>
+        </div>
+
+        <!-- Spline 3D Scene Background -->
+        <div class="absolute inset-0 z-10 opacity-70 pointer-events-auto">
+            <spline-viewer url="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"></spline-viewer>
+        </div>
+
+        <!-- Hello content overlay (centered) -->
+        <div class="relative z-20 flex flex-col items-center justify-center w-full h-full pointer-events-none">
+            <div id="hello-svg-container" class="w-full max-w-[650px] px-6 text-[#C5A16F] flex items-center justify-center h-56">
+                <!-- SVGs will be injected here dynamically by JS -->
+            </div>
+            <div class="absolute bottom-12 font-mono text-[9px] text-[#A3C4D9] uppercase tracking-[0.4em] animate-pulse select-none">
+                [ CLICK ANYWHERE TO ENTER SYSTEM ]
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Mode Toggle Widget -->
+    <div id="mode-toggle-widget" class="fixed bottom-6 left-6 z-[9999] flex flex-col items-start font-mono text-[9px] pointer-events-auto">
+        <div class="glass-panel p-3 border-[#C5A16F]/30 bg-[#0B1118]/90 flex flex-col gap-2 relative shadow-2xl">
+            <!-- Brackets -->
+            <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#C5A16F]/60"></div>
+            <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#C5A16F]/60"></div>
+            
+            <div class="text-[#A3C4D9] uppercase tracking-[0.2em] font-sync text-[8px] flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" id="mode-pulse"></span>
+                SYS_VISUALS: <span id="current-mode-label" class="text-white">NORMAL</span>
+            </div>
+            
+            <div class="flex gap-2">
+                <button id="btn-mode-normal" onclick="setSystemMode('normal')" 
+                    class="px-3 py-1.5 border border-[#C5A16F] text-[#C5A16F] transition hover:bg-[#C5A16F]/10 hover:scale-105 active:scale-95">
+                    [ NORMAL_MODE ]
+                </button>
+                <button id="btn-mode-lite" onclick="setSystemMode('lite')" 
+                    class="px-3 py-1.5 border border-white/20 text-gray-500 transition hover:border-[#C5A16F]/50 hover:text-white hover:scale-105 active:scale-95">
+                    [ LITE_MODE ]
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div id="canvas-container"></div>
 
@@ -899,37 +1103,10 @@
 
                 <!-- Previous Events: Horizontal Scroll/Grid -->
                 <h3 class="font-sync text-xs text-gray-500 mb-8 tracking-[0.4em]">// MISSION_ARCHIVE</h3>
-                <div id="past-wrapper" class="relative group">
-
-                    <!-- LEFT -->
-                    <button onclick="scrollPast(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 z-20 
-               w-12 h-12 flex items-center justify-center
-               rounded-full border border-[#C5A16F]/30
-               text-[#C5A16F] text-xl
-               bg-[#0B1118]/40 backdrop-blur-md
-               opacity-0 group-hover:opacity-100
-               transition-all duration-300
-               hover:bg-[#C5A16F] hover:text-[#0B1118]
-               hover:scale-110">
-                        ←
-                    </button>
-
-                    <!-- RIGHT -->
-                    <button onclick="scrollPast(1)" class="absolute right-4 top-1/2 -translate-y-1/2 z-20 
-               w-12 h-12 flex items-center justify-center
-               rounded-full border border-[#C5A16F]/30
-               text-[#C5A16F] text-xl
-               bg-[#0B1118]/40 backdrop-blur-md
-               opacity-0 group-hover:opacity-100
-               transition-all duration-300
-               hover:bg-[#C5A16F] hover:text-[#0B1118]
-               hover:scale-110">
-                        →
-                    </button>
+                <div id="past-wrapper" class="relative">
 
                     <!-- SCROLL CONTAINER -->
-                    <div id="past-events"
-                        class="flex gap-8 overflow-x-auto scroll-smooth no-scrollbar px-2 snap-x snap-mandatory">
+                    <div id="past-events" class="scroll-container">
                     </div>
 
                 </div>
@@ -1140,126 +1317,151 @@
 
 </body>
 <script>
+    const isLiteMode = localStorage.getItem('lite-mode') === 'true';
+
     // --- 1. 3D Background (Three.js) ---
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById('canvas-container').appendChild(renderer.domElement);
+    let starsMesh;
+    if (!isLiteMode) {
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-    const starsGeometry = new THREE.BufferGeometry();
-    const starsCount = 1500;
-    const posArray = new Float32Array(starsCount * 3);
-    for (let i = 0; i < starsCount * 3; i++) {
-        posArray[i] = (Math.random() - 0.5) * 10;
-    }
-    starsGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-    const starsMaterial = new THREE.PointsMaterial({ size: 0.005, color: 0xC5A16F });
-    const starsMesh = new THREE.Points(starsGeometry, starsMaterial);
-    scene.add(starsMesh);
-    camera.position.z = 3;
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsCount = 1500;
+        const posArray = new Float32Array(starsCount * 3);
+        for (let i = 0; i < starsCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 10;
+        }
+        starsGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const starsMaterial = new THREE.PointsMaterial({ size: 0.005, color: 0xC5A16F });
+        starsMesh = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(starsMesh);
+        camera.position.z = 3;
 
-    function animate() {
-        requestAnimationFrame(animate);
-        starsMesh.rotation.y += 0.0005;
-        renderer.render(scene, camera);
+        function animate() {
+            if (localStorage.getItem('lite-mode') === 'true') return;
+            requestAnimationFrame(animate);
+            starsMesh.rotation.y += 0.0005;
+            renderer.render(scene, camera);
+        }
+        animate();
     }
-    animate();
 
     // --- 2. GSAP Animations ---
     gsap.registerPlugin(ScrollTrigger);
-    const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
 
-    // Hero Sequence
-    tl.to("#hero-logo", { opacity: 1, scale: 1, duration: 1.5, delay: 0.5 })
-        .to("#hero-sub", { opacity: 1, y: 0, duration: 1 }, "-=1")
-        .to("#hero-title", { opacity: 1, y: 0, duration: 1.5 }, "-=0.8")
-        .to("#hero-p", { opacity: 1, y: 0, duration: 1 }, "-=1")
-        .to("#hero-btns", { opacity: 1, y: 0, duration: 1 }, "-=0.5");
+    let heroTimelineStarted = false;
+    function startEUREKAHeroTimeline() {
+        if (heroTimelineStarted) return;
+        heroTimelineStarted = true;
 
-    // About Reveal
-    gsap.utils.toArray(".reveal").forEach(elem => {
-        gsap.from(elem, {
-            scrollTrigger: { trigger: elem, start: "top 85%" },
-            y: 50, opacity: 0, duration: 1.5
-        });
-    });
+        if (isLiteMode) {
+            // Instantly show all reveal and hero elements
+            gsap.set("#hero-logo, #hero-sub, #hero-title, #hero-p, #hero-btns", { opacity: 1, scale: 1, y: 0 });
+            gsap.set(".reveal, .board-reveal, .social-card, .division-card, .upcoming-event-reveal, .event-reveal, .achievement-reveal", { opacity: 1, y: 0, x: 0, scale: 1 });
+        } else {
+            const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
 
-    // Board Member Stagger Reveal
-    gsap.from(".board-reveal", {
-        scrollTrigger: {
-            trigger: "#board",
-            start: "top 70%"
-        },
-        y: 100,
-        opacity: 0,
-        duration: 1.2,
-        stagger: 0.2, // This makes them pop up one by one
-        ease: "back.out(1.7)"
-    });
+            // Hero Sequence
+            tl.to("#hero-logo", { opacity: 1, scale: 1, duration: 1.5, delay: 0.1 })
+                .to("#hero-sub", { opacity: 1, y: 0, duration: 1 }, "-=1")
+                .to("#hero-title", { opacity: 1, y: 0, duration: 1.5 }, "-=0.8")
+                .to("#hero-p", { opacity: 1, y: 0, duration: 1 }, "-=1")
+                .to("#hero-btns", { opacity: 1, y: 0, duration: 1 }, "-=0.5");
 
-    // Mouse Parallax for Background
-    window.addEventListener('mousemove', (e) => {
-        const x = (e.clientX / window.innerWidth) - 0.5;
-        const y = (e.clientY / window.innerHeight) - 0.5;
-        gsap.to(starsMesh.rotation, { y: x * 0.3, x: y * 0.3, duration: 2 });
-    });
+            // About Reveal
+            gsap.utils.toArray(".reveal").forEach(elem => {
+                gsap.from(elem, {
+                    scrollTrigger: { trigger: elem, start: "top 85%" },
+                    y: 50, opacity: 0, duration: 1.5
+                });
+            });
 
-    // social card
+            // Board Member Stagger Reveal
+            gsap.from(".board-reveal", {
+                scrollTrigger: {
+                    trigger: "#board",
+                    start: "top 70%"
+                },
+                y: 100,
+                opacity: 0,
+                duration: 1.2,
+                stagger: 0.2, // This makes them pop up one by one
+                ease: "back.out(1.7)"
+            });
 
-    // Social Cards Stagger Animation
-    gsap.from(".social-card", {
-        scrollTrigger: {
-            trigger: ".social-container",
-            start: "top 80%"
-        },
-        y: 40,
-        opacity: 0,
-        duration: 1,
-        stagger: 0.15,
-        ease: "power2.out"
-    });
+            // Mouse Parallax for Background
+            window.addEventListener('mousemove', (e) => {
+                if (!starsMesh) return;
+                const x = (e.clientX / window.innerWidth) - 0.5;
+                const y = (e.clientY / window.innerHeight) - 0.5;
+                gsap.to(starsMesh.rotation, { y: x * 0.3, x: y * 0.3, duration: 2 });
+            });
 
-    // Staggered entry for divisions
-    gsap.from(".division-card", {
-        scrollTrigger: {
-            trigger: ".division-grid",
-            start: "top 95%",
-            toggleActions: "play none none none"
-        },
-        y: 60,
-        duration: 1.2,
-        stagger: 0.15,
-        ease: "expo.out",
-        clearProps: "all"
-    });
+            // Social Cards Stagger Animation
+            gsap.from(".social-card", {
+                scrollTrigger: {
+                    trigger: ".social-container",
+                    start: "top 80%"
+                },
+                y: 40,
+                opacity: 0,
+                duration: 1,
+                stagger: 0.15,
+                ease: "power2.out"
+            });
+
+            // Staggered entry for divisions
+            gsap.from(".division-card", {
+                scrollTrigger: {
+                    trigger: ".division-grid",
+                    start: "top 95%",
+                    toggleActions: "play none none none"
+                },
+                y: 60,
+                duration: 1.2,
+                stagger: 0.15,
+                ease: "expo.out",
+                clearProps: "all"
+            });
+        }
+    }
 
     // Function to handle clicking a division
     function navigateToTeam(teamId) {
-        // Add a cinematic exit animation before "navigating"
-        gsap.to("body", {
-            opacity: 0,
-            duration: 0.6,
-            onComplete: () => {
-                window.location.href = `team-details.html?team=${teamId}`;
-            }
-        });
+        if (isLiteMode) {
+            window.location.href = `team-details.html?team=${teamId}`;
+        } else {
+            // Add a cinematic exit animation before "navigating"
+            gsap.to("body", {
+                opacity: 0,
+                duration: 0.6,
+                onComplete: () => {
+                    window.location.href = `team-details.html?team=${teamId}`;
+                }
+            });
+        }
     }
 
     //scrolling
 
     // 1. Initialize Lenis (Global momentum smooth scroll)
-    const lenis = new Lenis({
-        duration: 1.5, // How long the scroll takes (higher = more cinematic)
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Custom cinematic ease
-        smoothWheel: true
-    })
+    let lenis;
+    if (!isLiteMode) {
+        lenis = new Lenis({
+            duration: 1.5, // How long the scroll takes (higher = more cinematic)
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Custom cinematic ease
+            smoothWheel: true
+        });
 
-    function raf(time) {
-        lenis.raf(time)
-        requestAnimationFrame(raf)
+        function raf(time) {
+            if (lenis) lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
     }
-    requestAnimationFrame(raf)
 
     // 2. GSAP ScrollTo for Navigation Clicks
     document.querySelectorAll('.nav-links a[href^="#"]').forEach(anchor => {
@@ -1299,51 +1501,52 @@
     });
 
     // --- Event & Achievement Animations ---
+    if (!isLiteMode) {
+        // Upcoming Event Reveal
+        gsap.from(".upcoming-event-reveal", {
+            scrollTrigger: {
+                trigger: ".upcoming-event-reveal",
+                start: "top 80%",
+            },
+            x: -100,
+            opacity: 0,
+            duration: 1.5,
+            ease: "expo.out"
+        });
 
-    // Upcoming Event Reveal
-    gsap.from(".upcoming-event-reveal", {
-        scrollTrigger: {
-            trigger: ".upcoming-event-reveal",
-            start: "top 80%",
-        },
-        x: -100,
-        opacity: 0,
-        duration: 1.5,
-        ease: "expo.out"
-    });
+        // Grid Stagger for Past Events
+        gsap.from(".event-reveal", {
+            scrollTrigger: {
+                trigger: "#events", // Trigger the whole section container
+                start: "top 95%",   // Start much earlier
+            },
+            y: 30,
+            opacity: 0,
+            duration: 0.8,
+            stagger: 0.1,         // Faster stagger so they appear almost together
+            ease: "power2.out",
+            onComplete: function () {
+                // Force opacity to 1 at the end to prevent "faded" look
+                gsap.set(".event-reveal", { opacity: 1 });
+            }
+        });
 
-    // Grid Stagger for Past Events
-    gsap.from(".event-reveal", {
-        scrollTrigger: {
-            trigger: "#events", // Trigger the whole section container
-            start: "top 95%",   // Start much earlier
-        },
-        y: 30,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.1,         // Faster stagger so they appear almost together
-        ease: "power2.out",
-        onComplete: function () {
-            // Force opacity to 1 at the end to prevent "faded" look
-            gsap.set(".event-reveal", { opacity: 1 });
-        }
-    });
-
-    // Achievements Side-by-Side Reveal
-    gsap.from(".achievement-reveal", {
-        scrollTrigger: {
-            trigger: "#achievements",
-            start: "top 95%",
-        },
-        y: 40,
-        opacity: 0,
-        duration: 1,
-        stagger: 0.15,
-        ease: "expo.out",
-        onComplete: function () {
-            gsap.set(".achievement-reveal", { opacity: 1 });
-        }
-    });
+        // Achievements Side-by-Side Reveal
+        gsap.from(".achievement-reveal", {
+            scrollTrigger: {
+                trigger: "#achievements",
+                start: "top 95%",
+            },
+            y: 40,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.15,
+            ease: "expo.out",
+            onComplete: function () {
+                gsap.set(".achievement-reveal", { opacity: 1 });
+            }
+        });
+    }
 
     // --- 1. Terminal Trigger (Logo Click) ---
     const logo = document.querySelector('.club-logo') || document.querySelector('#hero-logo img');
@@ -1553,59 +1756,312 @@
         wrapper.style.setProperty("--y", y + "%");
     });
 
-    //scroll for pastevents
-    let pastIndex = 0;
 
-    function scrollPast(direction) {
-        const container = document.getElementById("past-events");
-        const cards = container.children;
-
-        if (!cards.length) return;
-
-        pastIndex += direction;
-
-        if (pastIndex < 0) pastIndex = 0;
-        if (pastIndex >= cards.length) pastIndex = cards.length - 1;
-
-        const card = cards[pastIndex];
-
-        container.scrollTo({
-            left: card.offsetLeft - container.offsetWidth / 2 + card.offsetWidth / 2,
-            behavior: "smooth"
-        });
-        updateActiveCard();
-    }
-    function updateActiveCard() {
-    const container = document.getElementById("past-events");
-    const cards = container.children;
-
-    Array.from(cards).forEach((card, i) => {
-        card.classList.toggle("active", i === pastIndex);
-    });
-}
-    //swipe
-    let pastStartX = 0;
-    let pastEndX = 0;
-
-    const pastWrapper = document.getElementById("past-wrapper");
-
-    pastWrapper.addEventListener("touchstart", (e) => {
-        pastStartX = e.touches[0].clientX;
-    });
-
-    pastWrapper.addEventListener("touchmove", (e) => {
-        pastEndX = e.touches[0].clientX;
-    });
-
-    pastWrapper.addEventListener("touchend", () => {
-        let diff = pastStartX - pastEndX;
-
-        if (diff > 50) scrollPast(1);   // swipe left
-        if (diff < -50) scrollPast(-1); // swipe right
-    });
 
     window.addEventListener("load", () => {
         loadDivisions();
+    });
+
+    // --- 4. System Mode Selector Widget Integration ---
+    function setSystemMode(mode) {
+        const currentMode = localStorage.getItem('lite-mode') === 'true' ? 'lite' : 'normal';
+        if (currentMode === mode) return;
+        
+        localStorage.setItem('lite-mode', mode === 'lite' ? 'true' : 'false');
+        
+        const label = document.getElementById('current-mode-label');
+        if (label) label.innerText = 'REBOOTING...';
+        
+        document.body.style.opacity = '0.3';
+        document.body.style.filter = 'blur(5px)';
+        
+        setTimeout(() => {
+            window.location.reload();
+        }, 400);
+    }
+
+    function initModeToggle() {
+        const isLite = localStorage.getItem('lite-mode') === 'true';
+        
+        const normalBtn = document.getElementById('btn-mode-normal');
+        const liteBtn = document.getElementById('btn-mode-lite');
+        const label = document.getElementById('current-mode-label');
+        const pulse = document.getElementById('mode-pulse');
+        
+        if (isLite) {
+            if (liteBtn) {
+                liteBtn.style.background = '#C5A16F';
+                liteBtn.style.color = '#0B1118';
+                liteBtn.style.borderColor = '#C5A16F';
+            }
+            if (normalBtn) {
+                normalBtn.style.background = 'transparent';
+                normalBtn.style.color = '#6b7280';
+                normalBtn.style.borderColor = 'rgba(255,255,255,0.1)';
+            }
+            if (label) label.innerText = 'LITE';
+            if (pulse) {
+                pulse.className = 'w-1.5 h-1.5 rounded-full bg-amber-500';
+            }
+        } else {
+            if (normalBtn) {
+                normalBtn.style.background = '#C5A16F';
+                normalBtn.style.color = '#0B1118';
+                normalBtn.style.borderColor = '#C5A16F';
+            }
+            if (liteBtn) {
+                liteBtn.style.background = 'transparent';
+                liteBtn.style.color = '#6b7280';
+                liteBtn.style.borderColor = 'rgba(255,255,255,0.1)';
+            }
+            if (label) label.innerText = 'NORMAL';
+            if (pulse) {
+                pulse.className = 'w-1.5 h-1.5 rounded-full bg-green-500';
+            }
+        }
+    }
+    
+    // --- 5. Apple Hello Preloader Handwriting Loop Engine ---
+    const greetings = [
+        {
+            lang: 'english',
+            viewBox: '0 0 638 200',
+            strokeWidth: 14.8883,
+            durationScale: 1,
+            title: 'hello',
+            paths: [
+                {
+                    d: 'M8.69214 166.553C36.2393 151.239 61.3409 131.548 89.8191 98.0295C109.203 75.1488 119.625 49.0228 120.122 31.0026C120.37 17.6036 113.836 7.43883 101.759 7.43883C88.3598 7.43883 79.9231 17.6036 74.7122 40.9363C69.005 66.5793 64.7866 96.0036 54.1166 190.356',
+                    duration: 0.8,
+                    ease: 'power1.inOut'
+                },
+                {
+                    d: 'M55.1624 181.135C60.6251 133.114 81.4118 98.0479 107.963 98.0479C123.844 98.0479 133.937 110.703 131.071 128.817C129.457 139.487 127.587 150.405 125.408 163.06C122.869 178.941 130.128 191.348 152.122 191.348C184.197 191.348 219.189 173.523 237.097 145.915C243.198 136.509 245.68 128.073 245.928 119.884C246.176 104.996 237.739 93.8296 222.851 93.8296C203.992 93.8296 189.6 115.17 189.6 142.465C189.6 171.745 205.481 192.341 239.208 192.341C285.066 192.341 335.86 137.292 359.199 75.8585C365.788 58.513 368.26 42.4065 368.26 31.1512C368.26 17.8057 364.042 7.55823 352.131 7.55823C340.469 7.55823 332.777 16.6141 325.829 30.9129C317.688 47.4967 311.667 71.4162 309.203 98.4549C303 166.301 316.896 191.348 349.936 191.348C390 191.348 434.542 135.534 457.286 75.6686C463.803 58.513 466.275 42.4065 466.275 31.1512C466.275 17.8057 462.057 7.55823 450.146 7.55823C438.484 7.55823 430.792 16.6141 423.844 30.9129C415.703 47.4967 409.682 71.4162 407.218 98.4549C401.015 166.301 414.911 191.348 444.416 191.348C473.874 191.348 489.877 165.67 499.471 138.402C508.955 111.447 520.618 94.8221 544.935 94.8221C565.035 94.8221 580.916 109.71 580.916 137.75C580.916 168.768 560.792 192.093 535.362 192.341C512.984 192.589 498.285 174.475 499.774 147.179C501.511 116.907 519.873 94.8221 543.943 94.8221C557.839 94.8221 569.51 100.999 578.682 107.725C603.549 125.866 622.709 114.656 630.047 96.7186',
+                    duration: 2.8,
+                    delay: 0.7,
+                    ease: 'power1.inOut'
+                }
+            ]
+        },
+        {
+            lang: 'hindi',
+            viewBox: '0 0 605 273',
+            strokeWidth: 14.888,
+            durationScale: 0.8,
+            title: 'नमस्ते',
+            paths: [
+                { d: 'M42.3842 150.002C53.2928 153.473 60.4984 162.29 60.4984 175.561C60.4984 189.953 50.3247 201.119 36.677 201.119C24.022 201.119 14.8408 192.186 14.8408 179.035C14.8408 160.269 31.2182 148.265 56.5282 149.01C82.0863 149.754 103.723 163.663 120.367 185.069', duration: 0.6, ease: 'power1.out' },
+                { d: 'M133.502 93.5842C124.459 153.875 117.303 209.683 111.71 264.988', duration: 0.4, delay: 0.6, ease: 'power1.out' },
+                { d: 'M216.556 90.9181C217.117 117.977 216.81 137.689 214.869 160.067C212.007 193.058 200.119 213.115 180.936 213.115C169.295 213.115 160.844 205.334 160.844 193.399C160.844 177.222 175.901 164.28 203.653 165.376C229.863 166.411 256.651 174.863 275.138 192.025', duration: 0.6, delay: 1, ease: 'power1.out' },
+                { d: 'M289.489 90.0085C280.255 150.162 272.672 207.783 267.379 263.003', duration: 0.4, delay: 1.6, ease: 'power1.out' },
+                { d: 'M373.949 90.0198C394.816 102.051 408.098 128.602 408.098 154.079C408.098 185.141 387.465 205.586 358.47 205.586C330.249 205.586 311.145 186.038 317.527 170.35C322.864 157.231 341.378 156.812 356.237 168.861C374.674 183.811 382.044 216.764 385.021 261.169', duration: 0.6, delay: 2, ease: 'power1.out' },
+                { d: 'M403.474 177.549C418.085 183.32 439.163 184.314 458.424 179.805', duration: 0.4, delay: 2.6, ease: 'power1.out' },
+                { d: 'M556.981 88.1333C546.807 149.619 538.371 207.01 531.919 262.906', duration: 0.4, delay: 3, ease: 'power1.out' },
+                { d: 'M536.891 222.462C541.984 183.336 528.689 152.484 496.435 152.484C472.365 152.484 453.755 175.064 453.755 203.104C453.755 223.451 461.199 245.784 475.095 261.417', duration: 0.6, delay: 3.4, ease: 'power1.out' },
+                { d: 'M521.259 45.4307C485.619 43.0134 474.856 32.3917 474.856 21.5298C474.856 12.832 482.71 7.04349 493.506 7.46568C518.289 8.37031 542.96 35.3336 555.578 70.4412', duration: 0.6, delay: 4, ease: 'power1.out' },
+                { d: 'M7.44434 88.6792C30.9102 88.8706 59.0093 89.2085 95.3706 89.2085C132.178 89.2085 208.165 89.2571 253.623 89.2047C295.091 89.1568 396.683 89.0223 452.784 89.0234C506.182 89.0244 552.847 88.4444 596.931 87.2836', duration: 0.8, delay: 4.6, ease: 'power1.out' }
+            ]
+        },
+        {
+            lang: 'spanish',
+            viewBox: '0 0 562 200',
+            strokeWidth: 14.888,
+            durationScale: 0.8,
+            title: 'hola',
+            paths: [
+                { d: 'M8.692 169.422c27.495-16.185 51.282-36.493 77.822-72.424 18.627-25.219 27.738-47.893 28.236-65.962.248-13.399-6.204-23.563-18.362-23.563-13.4 0-21.837 10.164-27.048 33.497-5.707 25.643-9.925 55.067-20.595 149.42', duration: 0.8, ease: 'power1.out' },
+                { d: 'M49.79 181.168c5.265-46.274 26.25-83.086 52.801-83.086 15.881 0 25.974 12.655 23.108 30.769-1.613 10.67-4.528 23.077-6.193 35.236-2.026 15.384 3.761 27.295 21.655 27.295 25.257 0 41.157-24.523 48.037-53.562', duration: 0.8, delay: 0.7, ease: 'power1.inOut' },
+                { d: 'M234.601 94.36c-24.822 2.006-43.39 23.044-46.898 51.861-3.226 26.302 11.414 46.154 34.739 46.154 28.288 0 46.65-24.318 47.891-54.591.992-29.032-12.903-43.672-31.762-43.672-14.888 0-22.829 11.166-22.332 24.813.484 18.661 14.478 39.612 43.839 42.289 40.725 3.714 96.424-26.396 118.914-85.593 6.487-17.074 8.959-33.18 8.959-44.436 0-13.346-4.219-23.593-16.129-23.593-11.663 0-19.355 9.056-26.303 23.355-8.14 16.583-14.162 40.503-16.625 67.542-6.204 67.846 7.692 92.893 37.42 92.893 30.127 0 50.049-26.113 58.664-56.317', duration: 1.6, delay: 1.4, ease: 'power1.inOut' },
+                { d: 'M503.236 112.864c-4.864-11.195-15.204-18.753-31.664-18.753-27.295 0-47.808 27.296-49.155 56.576-1.174 26.799 11.192 41.864 28.805 41.687 25.001-.25 43.378-24.805 51.581-76.763 1.012-6.41 2.061-13.104 3.073-19.514', duration: 0.7, delay: 2.9, ease: 'power1.inOut' },
+                { d: 'm505.875 96.097-3.073 19.507c-4.482 28.44-6.549 39.66-6.327 46.994.518 17.121 6.675 28.784 22.06 28.784 19.355 0 30.21-13.152 35.421-27.544', duration: 0.8, delay: 3.5, ease: 'power1.inOut' }
+            ]
+        },
+        {
+            lang: 'vietnamese',
+            viewBox: '0 0 1009 200',
+            strokeWidth: 14.8883,
+            durationScale: 0.8,
+            title: 'xin chào',
+            paths: [
+                { d: 'M102.233 96.2277C75.6823 127.245 45.1612 158.759 11.4143 190.521', duration: 0.3, ease: 'power1.inOut' },
+                { d: 'M7.69214 116.575C9.67725 105.16 16.8733 95.7311 28.5358 95.7311C40.4465 95.7311 46.8981 105.408 53.3497 124.019C56.7409 133.283 60.1322 142.547 63.5234 151.81C73.689 179.58 81.1988 191.513 100.855 191.513C128.722 191.513 154.043 159.148 161.595 118.502C162.929 111.321 164.774 103.736 166.043 96.2273', duration: 0.7, delay: 0.4, ease: 'power1.inOut' },
+                { d: 'M166.043 96.2273C163.191 113.101 160.565 126.997 158.92 139.404C157.989 147.592 157.544 154.54 157.596 161.488C157.729 179.354 164.764 191.513 182.695 191.513C209.39 191.513 236.181 159.123 243.73 118.5C245.064 111.321 247.012 103.759 248.139 96.2273', duration: 0.5, delay: 1, ease: 'power1.out' },
+                { d: 'M248.139 96.2278C243.424 127.741 239.454 158.759 234.491 190.272', duration: 0.3, delay: 1.5, ease: 'power1.out' },
+                { d: 'M237.873 167.951C244.704 121.32 265.508 94.2422 290.322 94.2422C307.692 94.2422 316.625 106.153 315.136 123.026C313.896 135.681 309.677 150.322 308.685 162.729C307.444 179.85 316.499 191.513 330.769 191.513C348.722 191.513 359.309 179.314 364.143 165.965', duration: 0.9, delay: 1.8, ease: 'power1.out' },
+                { d: 'M535.91 109.876C531.265 100.446 520.943 93.4984 505.459 93.4984C476.516 93.4984 462.044 117.816 462.044 143.374C462.044 171.503 482.265 192.506 511.307 192.506C559.762 192.506 592.902 136.708 621.581 97.8807C640.764 71.9101 649.874 49.2359 650.372 31.1674C650.62 17.7684 644.168 7.60362 632.01 7.60362C618.61 7.60362 610.173 17.7684 604.963 41.1011C599.255 66.7441 595.037 96.1684 584.367 190.521', duration: 1.1, delay: 2.6, ease: 'power1.inOut' },
+                { d: 'M585.413 181.299C590.677 135.025 611.663 98.2125 638.213 98.2125C654.094 98.2125 664.187 110.868 661.321 128.982C659.708 139.652 656.794 152.059 655.128 164.217C653.102 179.602 658.89 191.513 676.813 191.513C702.178 191.513 717.375 164.077 725.613 135.196', duration: 1, delay: 3.6, ease: 'power1.inOut' },
+                { d: 'M803.871 112.995C799.007 101.8 788.666 94.2423 772.207 94.2423C744.912 94.2423 724.398 121.538 723.052 150.818C721.878 177.617 734.244 192.681 751.857 192.505C776.858 192.255 795.234 167.699 803.437 115.742C804.449 109.332 805.498 102.638 806.51 96.2274', duration: 0.8, delay: 4.6, ease: 'power1.out' },
+                { d: 'M806.51 96.2274C805.486 102.73 804.461 109.232 803.436 115.735C798.955 144.175 796.887 155.395 797.109 162.729C797.628 179.85 803.785 191.513 820.064 191.513C842.563 191.513 860.966 164.721 870.266 138.289C879.653 111.612 891.315 94.9867 915.633 94.9867C935.732 94.9867 951.613 109.875 951.613 137.915C951.613 168.932 931.489 192.257 906.059 192.505C883.681 192.753 868.983 174.639 870.471 147.344C872.208 117.071 890.571 94.9867 914.64 94.9867C928.536 94.9867 940.207 101.164 949.38 107.89C974.247 126.031 993.407 114.82 1000.74 96.8832', duration: 1.5, delay: 5.4, ease: 'power1.out' },
+                { d: 'M763.027 19.3039C768.734 34.6886 780.397 48.3362 792.059 55.5322', duration: 0.8, delay: 7, ease: 'power1.inOut' }
+            ]
+        }
+    ];
+
+    let preloaderExited = false;
+    let helloTimeout;
+
+    function exitPreloader() {
+        if (preloaderExited) return;
+        preloaderExited = true;
+        
+        if (helloTimeout) clearTimeout(helloTimeout);
+        
+        const intro = document.getElementById('hello-intro');
+        const svgContainer = document.getElementById('hello-svg-container');
+        
+        if (intro) {
+            intro.removeEventListener('click', exitPreloader);
+            
+            if (svgContainer) {
+                gsap.to(svgContainer, {
+                    scale: 1.15,
+                    opacity: 0,
+                    duration: 0.6,
+                    ease: "power2.in"
+                });
+            }
+            
+            gsap.to(intro, {
+                opacity: 0,
+                duration: 0.8,
+                ease: "power2.inOut",
+                onComplete: () => {
+                    intro.style.display = 'none';
+                    intro.remove();
+                    startEUREKAHeroTimeline();
+                }
+            });
+        }
+    }
+
+    function drawGreeting(index) {
+        if (localStorage.getItem('lite-mode') === 'true') return;
+        
+        const container = document.getElementById('hello-svg-container');
+        if (!container) return;
+        
+        const data = greetings[index];
+        
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", data.viewBox);
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", data.strokeWidth);
+        svg.setAttribute("stroke-linecap", "round");
+        svg.setAttribute("class", "h-20 w-auto opacity-0");
+        
+        const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        title.textContent = data.title;
+        svg.appendChild(title);
+        
+        const pathElements = data.paths.map(p => {
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", p.d);
+            svg.appendChild(path);
+            return { el: path, pInfo: p };
+        });
+        
+        container.innerHTML = "";
+        container.appendChild(svg);
+        
+        gsap.to(svg, { opacity: 1, duration: 0.3 });
+        
+        pathElements.forEach(item => {
+            const len = item.el.getTotalLength();
+            item.el.style.strokeDasharray = len;
+            item.el.style.strokeDashoffset = len;
+            item.el.style.opacity = 0;
+        });
+        
+        let maxTotalTime = 0;
+        
+        pathElements.forEach(item => {
+            const len = item.el.getTotalLength();
+            const duration = item.pInfo.duration * data.durationScale;
+            const delay = (item.pInfo.delay || 0) * data.durationScale;
+            const ease = item.pInfo.ease || "power1.inOut";
+            
+            const totalTime = duration + delay;
+            if (totalTime > maxTotalTime) {
+                maxTotalTime = totalTime;
+            }
+            
+            gsap.to(item.el, {
+                opacity: 1,
+                duration: 0.1,
+                delay: delay
+            });
+            
+            gsap.to(item.el, {
+                strokeDashoffset: 0,
+                duration: duration,
+                delay: delay,
+                ease: ease
+            });
+        });
+        
+        const nextIndex = (index + 1) % greetings.length;
+        const holdTime = maxTotalTime + 1.2;
+        
+        helloTimeout = setTimeout(() => {
+            if (preloaderExited) return;
+            gsap.to(svg, {
+                opacity: 0,
+                duration: 0.4,
+                ease: "power1.in",
+                onComplete: () => {
+                    drawGreeting(nextIndex);
+                }
+            });
+        }, holdTime * 1000);
+    }
+
+    function initHelloPreloader() {
+        const isLite = localStorage.getItem('lite-mode') === 'true';
+        const intro = document.getElementById('hello-intro');
+        
+        if (isLite) {
+            if (intro) {
+                intro.style.display = 'none';
+                intro.remove();
+            }
+            startEUREKAHeroTimeline();
+            return;
+        }
+        
+        if (intro) {
+            drawGreeting(0);
+            intro.addEventListener('click', exitPreloader);
+            
+            // Also bind exit click listener directly to spline-viewer to bypass any shadow DOM bubbling caps
+            const spline = document.querySelector('spline-viewer');
+            if (spline) {
+                spline.addEventListener('click', exitPreloader);
+            }
+            
+            // Periodically check and hide Spline watermark logo inside Shadow DOM
+            const hideSplineLogo = setInterval(() => {
+                const splineViewer = document.querySelector('spline-viewer');
+                if (splineViewer) {
+                    // Re-bind to ensure click triggers exit correctly
+                    splineViewer.addEventListener('click', exitPreloader);
+                    
+                    if (splineViewer.shadowRoot) {
+                        const logo = splineViewer.shadowRoot.getElementById('logo');
+                        if (logo) {
+                            logo.style.display = 'none';
+                            clearInterval(hideSplineLogo);
+                        }
+                    }
+                }
+            }, 100);
+            setTimeout(() => clearInterval(hideSplineLogo), 12000);
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        initModeToggle();
+        initHelloPreloader();
     });
 
 </script>

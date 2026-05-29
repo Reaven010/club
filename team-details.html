@@ -5,6 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EUREKA | Team Core</title>
+    <script>
+        // Immediate early-check for Lite Mode to prevent flash of heavy animations
+        const isEarlyLite = localStorage.getItem('lite-mode') === 'true';
+        if (isEarlyLite) {
+            document.documentElement.classList.add('lite-mode');
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
@@ -18,6 +25,36 @@
             --navy: #0B1118;
             --gold: #C5A16F;
             --blue: #A3C4D9;
+        }
+
+        /* Lite Mode Override Rules */
+        .lite-mode *, 
+        .lite-mode *::before, 
+        .lite-mode *::after {
+            animation-delay: 0s !important;
+            animation-duration: 0s !important;
+            animation-iteration-count: 1 !important;
+            transition-delay: 0s !important;
+            transition-duration: 0s !important;
+            scroll-behavior: auto !important;
+            backdrop-filter: none !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+        }
+
+        .lite-mode #loader {
+            display: none !important;
+        }
+
+        .lite-mode .profile-card:hover {
+            transform: none !important;
+            border-color: rgba(197, 161, 111, 0.1) !important;
+            background: rgba(255, 255, 255, 0.02) !important;
+        }
+
+        .lite-mode .profile-card:hover .profile-img {
+            filter: grayscale(100%) !important;
+            transform: none !important;
         }
 
         body {
@@ -99,6 +136,31 @@
 </head>
 
 <body>
+
+    <!-- Floating Mode Toggle Widget -->
+    <div id="mode-toggle-widget" class="fixed bottom-6 left-6 z-[9999] flex flex-col items-start font-mono text-[9px] pointer-events-auto">
+        <div class="glass-panel p-3 border-[#C5A16F]/30 bg-[#0B1118]/90 flex flex-col gap-2 relative shadow-2xl">
+            <!-- Brackets -->
+            <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#C5A16F]/60"></div>
+            <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#C5A16F]/60"></div>
+            
+            <div class="text-[#A3C4D9] uppercase tracking-[0.2em] font-sync text-[8px] flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" id="mode-pulse"></span>
+                SYS_VISUALS: <span id="current-mode-label" class="text-white">NORMAL</span>
+            </div>
+            
+            <div class="flex gap-2">
+                <button id="btn-mode-normal" onclick="setSystemMode('normal')" 
+                    class="px-3 py-1.5 border border-[#C5A16F] text-[#C5A16F] transition hover:bg-[#C5A16F]/10 hover:scale-105 active:scale-95">
+                    [ NORMAL_MODE ]
+                </button>
+                <button id="btn-mode-lite" onclick="setSystemMode('lite')" 
+                    class="px-3 py-1.5 border border-white/20 text-gray-500 transition hover:border-[#C5A16F]/50 hover:text-white hover:scale-105 active:scale-95">
+                    [ LITE_MODE ]
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div id="loader">
         <div class="font-mono text-[10px] text-[#A3C4D9] mb-4 tracking-[0.5em]">DECRYPTING_TEAM_FILES...</div>
@@ -189,12 +251,82 @@ console.log("teamId:", teamId);
         }
 
         function startAnimations() {
-            const tl = gsap.timeline();
-            tl.to("#load-bar", { width: "100%", duration: 1.2 })
-                .to("#loader", { yPercent: -100, duration: 0.8, ease: "expo.inOut" })
-                .to("#team-title, #team-subtitle", { opacity: 1, y: 0, duration: 1, stagger: 0.2 }, "-=0.3")
-                .to(".member-item", { opacity: 1, y: 0, duration: 1, stagger: 0.1 }, "-=0.5");
+            const isLiteMode = localStorage.getItem('lite-mode') === 'true';
+            if (isLiteMode) {
+                const loader = document.getElementById('loader');
+                if (loader) loader.style.display = 'none';
+                gsap.set("#team-title, #team-subtitle, .member-item", { opacity: 1, y: 0 });
+            } else {
+                const tl = gsap.timeline();
+                tl.to("#load-bar", { width: "100%", duration: 1.2 })
+                    .to("#loader", { yPercent: -100, duration: 0.8, ease: "expo.inOut" })
+                    .to("#team-title, #team-subtitle", { opacity: 1, y: 0, duration: 1, stagger: 0.2 }, "-=0.3")
+                    .to(".member-item", { opacity: 1, y: 0, duration: 1, stagger: 0.1 }, "-=0.5");
+            }
         }
+
+        // --- 4. System Mode Selector Widget Integration ---
+        function setSystemMode(mode) {
+            const currentMode = localStorage.getItem('lite-mode') === 'true' ? 'lite' : 'normal';
+            if (currentMode === mode) return;
+            
+            localStorage.setItem('lite-mode', mode === 'lite' ? 'true' : 'false');
+            
+            const label = document.getElementById('current-mode-label');
+            if (label) label.innerText = 'REBOOTING...';
+            
+            document.body.style.opacity = '0.3';
+            document.body.style.filter = 'blur(5px)';
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 400);
+        }
+
+        function initModeToggle() {
+            const isLite = localStorage.getItem('lite-mode') === 'true';
+            
+            const normalBtn = document.getElementById('btn-mode-normal');
+            const liteBtn = document.getElementById('btn-mode-lite');
+            const label = document.getElementById('current-mode-label');
+            const pulse = document.getElementById('mode-pulse');
+            
+            if (isLite) {
+                if (liteBtn) {
+                    liteBtn.style.background = '#C5A16F';
+                    liteBtn.style.color = '#0B1118';
+                    liteBtn.style.borderColor = '#C5A16F';
+                }
+                if (normalBtn) {
+                    normalBtn.style.background = 'transparent';
+                    normalBtn.style.color = '#6b7280';
+                    normalBtn.style.borderColor = 'rgba(255,255,255,0.1)';
+                }
+                if (label) label.innerText = 'LITE';
+                if (pulse) {
+                    pulse.className = 'w-1.5 h-1.5 rounded-full bg-amber-500';
+                }
+            } else {
+                if (normalBtn) {
+                    normalBtn.style.background = '#C5A16F';
+                    normalBtn.style.color = '#0B1118';
+                    normalBtn.style.borderColor = '#C5A16F';
+                }
+                if (liteBtn) {
+                    liteBtn.style.background = 'transparent';
+                    liteBtn.style.color = '#6b7280';
+                    liteBtn.style.borderColor = 'rgba(255,255,255,0.1)';
+                }
+                if (label) label.innerText = 'NORMAL';
+                if (pulse) {
+                    pulse.className = 'w-1.5 h-1.5 rounded-full bg-green-500';
+                }
+            }
+        }
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            initModeToggle();
+        });
 
         window.onload = init;
     </script>
